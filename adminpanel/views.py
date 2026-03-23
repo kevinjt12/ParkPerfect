@@ -20,3 +20,4 @@ class StatisticsView(APIView):
             'dateRange': f'{start_date} to {end_date}',
             'statistics': statistics
         })
+    
