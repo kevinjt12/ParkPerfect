@@ -14,3 +14,4 @@ class ParkingLotsView(APIView):
         lots = get_lots() #call get lots function
         serializer = ParkingLotSerializer(lots, many=True) #convert to JSON
         return Response(serializer.data) #Send back in http response.
+    

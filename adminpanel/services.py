@@ -5,14 +5,14 @@ from parking.services import get_lots
 from users.models import User
 
 def calculate_occupancy_rate(lot):
-    """Calculates the occupancy rate for a single lot."""
+    #Calculates the occupancy rate for a single lot.
     if lot.totalSpaces == 0:
         return 0.0
     return (lot.totalSpaces - lot.availableSpaces) / lot.totalSpaces * 100
 
 
 def calculate_peak_time(lot, start_date, end_date):
-    """Returns the peak hour string for a single lot over a date range."""
+    #Returns the peak hour string for a single lot over a date range.
     peak_hours = (
         ParkingEvent.objects.filter(
             lot=lot,
@@ -32,7 +32,7 @@ def calculate_peak_time(lot, start_date, end_date):
 
 
 def calculate_occupancy_trend(lot, start_date, end_date):
-    """Returns time-series occupancy data for a single lot over a date range."""
+    #Returns time-series occupancy data for a single lot over a date range.
     trend = (
         ParkingEvent.objects.filter(
             lot=lot,
@@ -54,7 +54,7 @@ def calculate_occupancy_trend(lot, start_date, end_date):
 
 
 def calculate_statistics(lots, start_date, end_date):
-    """Aggregates statistics for all provided lots over a date range."""
+    #Aggregates statistics for all provided lots over a date range.
     results = []
     if not lots:
         return results
@@ -70,7 +70,7 @@ def calculate_statistics(lots, start_date, end_date):
 
 ######### NEEDS TESTING #########
 def verify_admin(admin_id, password):
-    """Verifies if the provided credentials belong to an admin user."""
+    #Verifies if the provided credentials belong to an admin user.
     try:
         admin = User.objects.get(id=admin_id, is_staff=True)
         return admin.check_password(password)
