@@ -4,6 +4,8 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.permissions import IsAdminUser
 
 from rest_framework.permissions import AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -14,7 +16,13 @@ from parking.services import get_lots
 from .services import calculate_statistics
 from .models import StatisticsReport
 
-class StatisticsView(APIView):
+class AdminAuthView(APIView):
+    #base view for all admin endpoints. Requires that is_staff =true
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAdminUser]
+
+    
+class StatisticsView(AdminAuthView):
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -46,7 +54,7 @@ class AdminLogin(APIView):
             'refresh': str(refresh),
             'user': UserSerializer(user).data
         })
-class AdminLogout(APIView):
+class AdminLogout(AdminAuthView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
