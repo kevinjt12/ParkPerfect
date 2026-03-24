@@ -15,3 +15,10 @@ venv/
 # OS files
 .DS_Store
 Thumbs.db
+
+# React / Node
+park-perfect/node_modules/
+park-perfect/dist/
+park-perfect/.env
+park-perfect/.env.local
+park-perfect/.env.production
