@@ -23,3 +23,6 @@ park-perfect/.vite/
 park-perfect/.env
 park-perfect/.env.local
 park-perfect/.env.production
+
+node_modules/
+dist/
