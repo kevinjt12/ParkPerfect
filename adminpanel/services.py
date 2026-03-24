@@ -2,6 +2,7 @@ from django.db.models import Count, Avg
 from django.db.models.functions import TruncHour
 from parking.models import ParkingLot, ParkingEvent
 from parking.services import get_lots
+from users.models import User
 
 def calculate_occupancy_rate(lot):
     """Calculates the occupancy rate for a single lot."""
@@ -66,3 +67,12 @@ def calculate_statistics(lots, start_date, end_date):
             'occupancyRates': calculate_occupancy_trend(lot, start_date, end_date),
         })
     return results
+
+######### NEEDS TESTING #########
+def verify_admin(admin_id, password):
+    """Verifies if the provided credentials belong to an admin user."""
+    try:
+        admin = User.objects.get(id=admin_id, is_staff=True)
+        return admin.check_password(password)
+    except User.DoesNotExist:
+        return False
