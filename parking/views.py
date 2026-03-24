@@ -15,6 +15,8 @@ class ParkingLotsView(APIView):
         lots = get_lots() #call get lots function
         serializer = ParkingLotSerializer(lots, many=True) #convert to JSON
         return Response(serializer.data) #Send back in http response.
+    
+
 
 class ParkingEventView(APIView):
     #is Authenicated ensure that the user logged in

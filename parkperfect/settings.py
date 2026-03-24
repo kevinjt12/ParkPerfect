@@ -80,7 +80,12 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'parkperfect.wsgi.application'
-
+ASGI_APPLICATION = 'parkperfect.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels.layers.InMemoryChannelLayer',
+    }
+}
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
@@ -154,4 +159,5 @@ REST_FRAMEWORK = {
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:3000',
     'http://localhost:5173',
+    "http://localhost:5174",
 ]
