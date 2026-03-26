@@ -22,9 +22,9 @@ fake = Faker()
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
 
 DB_CONFIG = {
-    "dbname":   "Here",
-    "user":     "Here",
-    "password": "Here",
+    "dbname":   "Parkperfect",
+    "user":     "postgres",
+    "password": "Steelersfan22#",
     "host":     "localhost",
     "port":     5432,
 }
