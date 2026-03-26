@@ -1,8 +1,11 @@
-from django.db.models import Count, Avg
-from django.db.models.functions import TruncHour
+from django.db.models import Count, Avg, ExpressionWrapper, IntegerField
+from django.db.models.functions import TruncHour, ExtractHour
 from parking.models import ParkingLot, ParkingEvent
 from parking.services import get_lots
 from users.models import User
+from django.db.models import F
+import datetime
+
 
 def calculate_occupancy_rate(lot):
     #Calculates the occupancy rate for a single lot.
@@ -32,25 +35,52 @@ def calculate_peak_time(lot, start_date, end_date):
 
 
 def calculate_occupancy_trend(lot, start_date, end_date):
-    #Returns time-series occupancy data for a single lot over a date range.
-    trend = (
+    start = datetime.date.fromisoformat(str(start_date))
+    end   = datetime.date.fromisoformat(str(end_date))
+    num_days = max((end - start).days + 1, 1)
+
+    parked_by_hour = (
         ParkingEvent.objects.filter(
             lot=lot,
+            eventType=ParkingEvent.PARKED,
             timestamp__date__gte=start_date,
             timestamp__date__lte=end_date,
         )
-        .annotate(hour=TruncHour('timestamp'))
-        .values('hour')
-        .annotate(avgAvailableSpaces=Avg('lot__availableSpaces'))
-        .order_by('hour')
+        .annotate(hour_of_day=ExtractHour('timestamp'))
+        .values('hour_of_day')
+        .annotate(count=Count('eventID'))
+        .order_by('hour_of_day')
     )
-    return [
-        {
-            'hour': entry['hour'].strftime('%Y-%m-%d %H:%M:%S'),
-            'avgAvailableSpaces': entry['avgAvailableSpaces'],
-        }
-        for entry in trend
-    ]
+
+    left_by_hour = (
+        ParkingEvent.objects.filter(
+            lot=lot,
+            eventType=ParkingEvent.LEFT,
+            timestamp__date__gte=start_date,
+            timestamp__date__lte=end_date,
+        )
+        .annotate(hour_of_day=ExtractHour('timestamp'))
+        .values('hour_of_day')
+        .annotate(count=Count('eventID'))
+        .order_by('hour_of_day')
+    )
+
+    parked_map = {e['hour_of_day']: e['count'] for e in parked_by_hour}
+    left_map   = {e['hour_of_day']: e['count'] for e in left_by_hour}
+
+    result = []
+    for hour in range(24):
+        avg_parked    = parked_map.get(hour, 0) / num_days
+        avg_left      = left_map.get(hour, 0)   / num_days
+        net_occupied  = max(0, min(avg_parked - avg_left, lot.totalSpaces))
+        avg_available = lot.totalSpaces - net_occupied
+
+        result.append({
+            'hour': f"{start_date} {hour:02d}:00:00",  # int → formatted string, no strftime needed
+            'avgAvailableSpaces': avg_available,
+        })
+
+    return result
 
 
 def calculate_statistics(lots, start_date, end_date):
@@ -62,6 +92,9 @@ def calculate_statistics(lots, start_date, end_date):
         results.append({
             'lotID': lot.lotID,
             'name': lot.name,
+            'totalSpaces': lot.totalSpaces,
+            'availableSpaces': lot.availableSpaces,
+
             'occupancyRate': calculate_occupancy_rate(lot),
             'peakTime': calculate_peak_time(lot, start_date, end_date),
             'occupancyRates': calculate_occupancy_trend(lot, start_date, end_date),
