@@ -346,6 +346,7 @@ export default function AdminDashboard() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background #0f0f0f; }
         input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); }
         @keyframes pulse {
           0%, 100% { opacity: 1; }
@@ -363,7 +364,7 @@ export default function AdminDashboard() {
         backgroundSize: "40px 40px",
         fontFamily: "'DM Sans', sans-serif",
         padding: "2rem",
-        boxSizing: "border-box",
+      
       }}>
 
         {/* ── Header ───────────────────────────────────────────────────────── */}
@@ -372,7 +373,7 @@ export default function AdminDashboard() {
           alignItems: "flex-start", flexWrap: "wrap", gap: 16, marginBottom: "2rem",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-            <img src="/Park_Perfect_Logo.png" alt="ParkPerfect" style={{ width: 44, height: 44, objectFit: "contain" }} />
+            <img src="/Park Perfect Logo.png" alt="ParkPerfect" style={{ width: 44, height: 44, objectFit: "contain" }} />
             <div>
               <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#f1f1f1", letterSpacing: "-0.5px" }}>
                 <span style={{ color: "#D72B2B" }}>Park</span>Perfect

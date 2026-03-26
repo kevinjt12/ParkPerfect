@@ -255,6 +255,7 @@ export default function AdminLogin() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap');
         * { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; background: #0f0f0f; }
         input:-webkit-autofill {
           -webkit-box-shadow: 0 0 0px 1000px #111 inset !important;
           -webkit-text-fill-color: #f1f1f1 !important;
