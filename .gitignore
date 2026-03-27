@@ -1,7 +1,8 @@
 # Python cache
 __pycache__/
 *.pyc
-
+*.pyo
+*.pyd
 # Virtual environments
 venv/
 parkperfect_venv/
@@ -27,3 +28,18 @@ park-perfect/.env.production
 
 node_modules/
 dist/
+adminpanel/__pycache__/__init__.cpython-311.pyc
+adminpanel/__pycache__/admin.cpython-311.pyc
+adminpanel/__pycache__/apps.cpython-311.pyc
+adminpanel/__pycache__/models.cpython-311.pyc
+adminpanel/migrations/__pycache__/__init__.cpython-311.pyc
+parking/__pycache__/__init__.cpython-311.pyc
+parking/__pycache__/admin.cpython-311.pyc
+parking/__pycache__/apps.cpython-311.pyc
+parking/__pycache__/models.cpython-311.pyc
+parking/migrations/__pycache__/__init__.cpython-311.pyc
+users/__pycache__/__init__.cpython-311.pyc
+users/__pycache__/admin.cpython-311.pyc
+users/__pycache__/apps.cpython-311.pyc
+users/__pycache__/models.cpython-311.pyc
+users/migrations/__pycache__/__init__.cpython-311.pyc

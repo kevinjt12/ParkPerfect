@@ -26,8 +26,8 @@ class StatisticsView(AdminAuthView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        start_date = request.query.params.get('start', str(date.today()))
-        end_date = request.query.params.get('end', str(date.today()))
+        start_date = request.query_params.get('start', str(date.today()))
+        end_date = request.query_params.get('end', str(date.today()))
         lots = get_lots()
         statistics = calculate_statistics(lots, start_date, end_date)
 
