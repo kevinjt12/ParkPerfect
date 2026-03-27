@@ -144,3 +144,81 @@ def test_leave_full_lot_returns_400(auth_client, lot):
     lot.save()
     response = auth_client.post("/parking/leave/", {"lot_id": lot.lotID})
     assert response.status_code == 400
+
+# ParkActionView Module Tests
+@pytest.mark.django_db
+def test_view_parking_map_returns_200(auth_client, lot):
+    response = auth_client.get("/parking/map/")
+    assert response.status_code == 200
+
+@pytest.mark.django_db
+def test_view_parking_map_returns_lot_data(auth_client, lot):
+    response = auth_client.get("/parking/map/")
+    assert len(response.data) > 0
+
+@pytest.mark.django_db
+def test_view_parking_map_requires_authentication(lot):
+    client = APIClient()
+    response = client.get("/parking/map/")
+    assert response.status_code == 401
+
+@pytest.mark.django_db
+def test_request_park_returns_200(auth_client, lot):
+    response = auth_client.post("/parking/action/park/", {"lot_id": lot.lotID})
+    assert response.status_code == 200
+
+@pytest.mark.django_db
+def test_request_park_fails_when_lot_not_found(auth_client):
+    response = auth_client.post("/parking/action/park/", {"lot_id": 99999})
+    assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_request_park_fails_when_lot_full(auth_client, lot):
+    lot.availableSpaces = 0
+    lot.save()
+    response = auth_client.post("/parking/action/park/", {"lot_id": lot.lotID})
+    assert response.status_code == 400
+
+@pytest.mark.django_db
+def test_request_park_requires_authentication(lot):
+    client = APIClient()
+    response = client.post("/parking/action/park/", {"lot_id": lot.lotID})
+    assert response.status_code == 401
+
+@pytest.mark.django_db
+def test_request_park_missing_lot_id_returns_400(auth_client):
+    response = auth_client.post("/parking/action/park/", {})
+    assert response.status_code == 400
+
+@pytest.mark.django_db
+def test_request_leave_returns_200(auth_client, lot, user):
+    # user must have an active parked record first
+    ParkingEvent.objects.create(
+        user=user,
+        lot=lot,
+        eventType=ParkingEvent.PARKED
+    )
+    response = auth_client.post("/parking/action/leave/", {"lot_id": lot.lotID})
+    assert response.status_code == 200
+
+@pytest.mark.django_db
+def test_request_leave_fails_without_active_record(auth_client, lot):
+    # no ParkingEvent created — should be rejected
+    response = auth_client.post("/parking/action/leave/", {"lot_id": lot.lotID})
+    assert response.status_code == 400
+
+@pytest.mark.django_db
+def test_request_leave_fails_when_lot_not_found(auth_client):
+    response = auth_client.post("/parking/action/leave/", {"lot_id": 99999})
+    assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_request_leave_requires_authentication(lot):
+    client = APIClient()
+    response = client.post("/parking/action/leave/", {"lot_id": lot.lotID})
+    assert response.status_code == 401
+
+@pytest.mark.django_db
+def test_request_leave_missing_lot_id_returns_400(auth_client):
+    response = auth_client.post("/parking/action/leave/", {})
+    assert response.status_code == 400
