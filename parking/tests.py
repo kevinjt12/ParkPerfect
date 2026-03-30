@@ -222,3 +222,77 @@ def test_request_leave_requires_authentication(lot):
 def test_request_leave_missing_lot_id_returns_400(auth_client):
     response = auth_client.post("/parking/action/leave/", {})
     assert response.status_code == 400
+
+# ─── 4.3 refresh_map() Tests ──────────────────────────────────
+from unittest.mock import patch, MagicMock
+
+@pytest.mark.django_db
+def test_refresh_map_calls_group_send(lot):
+    # verify refresh_map() attempts to broadcast to the parking_map group
+    with patch('parking.services.async_to_sync') as mock_async_to_sync:
+        mock_send = MagicMock()
+        mock_async_to_sync.return_value = mock_send
+
+        from parking.services import refresh_map
+        refresh_map()
+
+        mock_async_to_sync.assert_called_once()
+        mock_send.assert_called_once()
+
+@pytest.mark.django_db
+def test_refresh_map_sends_correct_group(lot):
+    # verify the broadcast targets the parking_map group specifically
+    with patch('parking.services.async_to_sync') as mock_async_to_sync:
+        mock_send = MagicMock()
+        mock_async_to_sync.return_value = mock_send
+
+        from parking.services import refresh_map
+        refresh_map()
+
+        call_args = mock_send.call_args[0]
+        assert call_args[0] == 'parking_map'
+
+@pytest.mark.django_db
+def test_refresh_map_sends_correct_type(lot):
+    # verify the message type matches the consumer handler name
+    with patch('parking.services.async_to_sync') as mock_async_to_sync:
+        mock_send = MagicMock()
+        mock_async_to_sync.return_value = mock_send
+
+        from parking.services import refresh_map
+        refresh_map()
+
+        call_args = mock_send.call_args[0]
+        message = call_args[1]
+        assert message['type'] == 'parking_update'
+
+@pytest.mark.django_db
+def test_refresh_map_includes_lot_data(lot):
+    # verify the broadcast payload contains lot information
+    with patch('parking.services.async_to_sync') as mock_async_to_sync:
+        mock_send = MagicMock()
+        mock_async_to_sync.return_value = mock_send
+
+        from parking.services import refresh_map
+        refresh_map()
+
+        call_args = mock_send.call_args[0]
+        message = call_args[1]
+        assert 'data' in message
+        assert 'lots' in message['data']
+
+@pytest.mark.django_db
+def test_refresh_map_called_after_mark_parked(user, lot):
+    # verify refresh_map() fires automatically after mark_parked()
+    with patch('parking.services.refresh_map') as mock_refresh:
+        from parking.services import mark_parked
+        mark_parked(user.userID, lot.lotID)
+        mock_refresh.assert_called_once()
+
+@pytest.mark.django_db
+def test_refresh_map_called_after_mark_left(user, lot):
+    # verify refresh_map() fires automatically after mark_left()
+    with patch('parking.services.refresh_map') as mock_refresh:
+        from parking.services import mark_left
+        mark_left(user.userID, lot.lotID)
+        mock_refresh.assert_called_once()
