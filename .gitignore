@@ -5,6 +5,7 @@ __pycache__/
 *.pyd
 # Virtual environments
 venv/
+parkperfect_venv/
 
 # Environment variables
 .env
