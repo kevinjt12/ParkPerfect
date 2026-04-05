@@ -5,7 +5,8 @@ from parking.services import get_lots
 from users.models import User
 from django.db.models import F
 import datetime
-
+from .models import StatisticsReport
+from django.utils import timezone
 
 def calculate_occupancy_rate(lot):
     #Calculates the occupancy rate for a single lot.
@@ -101,7 +102,6 @@ def calculate_statistics(lots, start_date, end_date):
         })
     return results
 
-######### NEEDS TESTING #########
 def verify_admin(admin_id, password):
     #Verifies if the provided credentials belong to an admin user.
     try:
@@ -109,3 +109,30 @@ def verify_admin(admin_id, password):
         return admin.check_password(password)
     except User.DoesNotExist:
         return False
+    
+def generate_report(start_date, end_date, lots=None):
+    """
+    Generates and persists a StatisticsReport.
+    """
+    if lots is None:
+        lots = get_lots()
+
+    stats_data = calculate_statistics(lots, start_date, end_date)
+
+    report = StatisticsReport.objects.create(
+        dateRange={
+            'start': str(start_date),
+            'end': str(end_date)
+        },
+        statistics=stats_data,
+        generated_at=timezone.now()
+    )
+    return report
+
+
+def get_report(report_id):
+    """Retrieve a single report by ID"""
+    try:
+        return StatisticsReport.objects.get(pk=report_id)
+    except StatisticsReport.DoesNotExist:
+        return None
