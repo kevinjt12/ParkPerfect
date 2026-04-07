@@ -102,7 +102,7 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'users.User'
+AUTH_USER_MODEL = 'users.user'
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -145,7 +145,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 SIMPLE_JWT = {
-    'USER_ID_FIELD': 'userID',
+    'USER_ID_FIELD': 'user_id',
     'USER_ID_CLAIM': 'user_id',
     'ACCESS_TOKEN_LIFETIME': timedelta(days=30 if DEBUG else 1),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=60 if DEBUG else 7),
@@ -164,3 +164,5 @@ CORS_ALLOWED_ORIGINS = [
     'http://localhost:5173',
     "http://localhost:5174",
 ]
+
+

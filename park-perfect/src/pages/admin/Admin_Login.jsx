@@ -34,7 +34,7 @@ const styles = {
   },
 
   // Top-right red radial glow — echoes the logo pin
-  glowRed: {
+  glow_red: {
     position: 'absolute',
     top: '-80px',
     right: '-80px',
@@ -45,7 +45,7 @@ const styles = {
   },
 
   // Bottom-left gold glow — echoes the crown
-  glowGold: {
+  glow_gold: {
     position: 'absolute',
     bottom: '-60px',
     left: '-60px',
@@ -56,7 +56,7 @@ const styles = {
   },
 
   // Logo image + "ParkPerfect" wordmark row
-  logoRow: {
+  logo_row: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'flex-start',
@@ -70,7 +70,7 @@ const styles = {
     objectFit: 'contain',
   },
 
-  brandCopy: {
+  brand_copy: {
     display: 'grid',
     gap: '4px',
   },
@@ -84,7 +84,7 @@ const styles = {
     fontWeight: '700',
   },
 
-  logoText: {
+  logo_text: {
     margin: 0,
     color: '#f8f7f4',
     fontFamily: "'Space Grotesk', sans-serif",
@@ -124,7 +124,7 @@ const styles = {
     margin: '0 0 32px 0',
   },
 
-  fieldGroup: { marginBottom: '20px' },
+  field_group: { marginBottom: '20px' },
 
   label: {
     display: 'block',
@@ -180,7 +180,7 @@ const styles = {
   },
 
   // Disabled/loading button — dimmed red
-  buttonDisabled: {
+  button_disabled: {
     width: '100%',
     padding: '12px',
     backgroundColor: '#7a1a1a',
@@ -208,25 +208,25 @@ const styles = {
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export default function AdminLogin() {
+export default function admin_login() {
   const navigate = useNavigate();
 
   // Form field values
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, set_email] = useState('');
+  const [password, set_password] = useState('');
 
   // UI feedback state
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [error, set_error] = useState('');
+  const [loading, set_loading] = useState(false);
 
   // Which input is currently focused (drives the red ring)
-  const [focused, setFocused] = useState('');
+  const [focused, set_focused] = useState('');
 
   // ── Login handler ──────────────────────────────────────────────────────────
-  const handleLogin = async (e) => {
+  const handle_login = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
+    set_loading(true);
+    set_error('');
 
     try {
       const response = await client.post('panel/login/', { email, password });
@@ -241,19 +241,19 @@ export default function AdminLogin() {
     } catch (err) {
       // Map common HTTP error codes to readable messages
       if (err.response?.status === 401) {
-        setError('Invalid email or password.');
+        set_error('Invalid email or password.');
       } else if (err.response?.status === 403) {
-        setError('You do not have admin privileges.');
+        set_error('You do not have admin privileges.');
       } else {
-        setError('Something went wrong. Please try again.');
+        set_error('Something went wrong. Please try again.');
       }
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
   };
 
   // ── Input style — adds red focus ring when active ─────────────────────────
-  const inputStyle = (name) => ({
+  const input_style = (name) => ({
     ...styles.input,
     borderColor: focused === name ? 'rgba(215,43,43,0.6)' : 'rgba(255,255,255,0.07)',
     boxShadow:   focused === name ? '0 0 0 3px rgba(215,43,43,0.12)' : 'none',
@@ -277,15 +277,15 @@ export default function AdminLogin() {
         <div style={styles.card}>
 
           {/* Decorative background glows */}
-          <div style={styles.glowRed} />
-          <div style={styles.glowGold} />
+          <div style={styles.glow_red} />
+          <div style={styles.glow_gold} />
 
           {/* Logo + brand name */}
-          <div style={styles.logoRow}>
+          <div style={styles.logo_row}>
             <img src="/Park Perfect Logo.png" alt="Park Perfect" style={styles.logo} />
-            <div style={styles.brandCopy}>
+            <div style={styles.brand_copy}>
               <p style={styles.eyebrow}>Fairfield University</p>
-              <h1 style={styles.logoText}>ParkPerfect</h1>
+              <h1 style={styles.logo_text}>ParkPerfect</h1>
             </div>
           </div>
 
@@ -301,37 +301,37 @@ export default function AdminLogin() {
           <p style={styles.subheading}>Sign in to manage your parking platform.</p>
 
           {/* ── Login form ─────────────────────────────────────────────────── */}
-          <form onSubmit={handleLogin}>
+          <form onSubmit={handle_login}>
 
             {/* Email */}
-            <div style={styles.fieldGroup}>
+            <div style={styles.field_group}>
               <label style={styles.label} htmlFor="email">Email address</label>
               <input
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                onFocus={() => setFocused('email')}
-                onBlur={() => setFocused('')}
+                onChange={(e) => set_email(e.target.value)}
+                onFocus={() => set_focused('email')}
+                onBlur={() => set_focused('')}
                 placeholder="admin@parkperfect.com"
                 required
-                style={inputStyle('email')}
+                style={input_style('email')}
               />
             </div>
 
             {/* Password */}
-            <div style={styles.fieldGroup}>
+            <div style={styles.field_group}>
               <label style={styles.label} htmlFor="password">Password</label>
               <input
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onFocus={() => setFocused('password')}
-                onBlur={() => setFocused('')}
+                onChange={(e) => set_password(e.target.value)}
+                onFocus={() => set_focused('password')}
+                onBlur={() => set_focused('')}
                 placeholder="••••••••"
                 required
-                style={inputStyle('password')}
+                style={input_style('password')}
               />
             </div>
 
@@ -349,7 +349,7 @@ export default function AdminLogin() {
             <button
               type="submit"
               disabled={loading}
-              style={loading ? styles.buttonDisabled : styles.button}
+              style={loading ? styles.button_disabled : styles.button}
               onMouseEnter={(e) => { if (!loading) e.target.style.backgroundColor = '#b52222'; }}
               onMouseLeave={(e) => { if (!loading) e.target.style.backgroundColor = '#D72B2B'; }}
               onMouseDown={(e)  => { if (!loading) e.target.style.transform = 'scale(0.98)'; }}
@@ -366,3 +366,6 @@ export default function AdminLogin() {
     </>
   );
 }
+
+
+

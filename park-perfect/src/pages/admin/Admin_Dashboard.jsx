@@ -25,45 +25,45 @@ const LOT_LABELS_FALLBACK = ["Lot A", "Lot B", "Lot C", "Lot D"];
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 // Format "2024-03-15 08:00:00" → "08:00"
-const formatPeakTime = (raw) => {
+const format_peak_time = (raw) => {
   if (!raw || raw === "N/A") return "N/A";
   return raw.split(" ")[1]?.slice(0, 5) ?? raw;
 };
 
 // Format "2024-03-15 06:00:00" → "06:00" for chart x-axis labels
-const formatHourLabel = (raw) => raw.split(" ")[1]?.slice(0, 5) ?? raw;
+const format_hour_label = (raw) => raw.split(" ")[1]?.slice(0, 5) ?? raw;
 
-// Build the trend dataset the chart expects from the API's occupancyRates arrays.
+// Build the trend dataset the chart expects from the API's occupancy_rates arrays.
 // The API returns per-lot trend arrays with different hour sets, so we merge them
 // into a unified hour axis and fill missing values with null.
-const buildTrendData = (statistics) => {
+const build_trend_data = (statistics) => {
   if (!statistics?.length) return { labels: [], datasets: [] };
 
   // Collect every unique hour string across all lots and sort chronologically
-  const hourSet = new Set();
+  const hour_set = new Set();
   statistics.forEach((lot) =>
-    lot.occupancyRates?.forEach((entry) => hourSet.add(entry.hour))
+    lot.occupancy_rates?.forEach((entry) => hour_set.add(entry.hour))
   );
-  const sortedHours = [...hourSet].sort();
-  const labels = sortedHours.map(formatHourLabel);
+  const sorted_hours = [...hour_set].sort();
+  const labels = sorted_hours.map(format_hour_label);
 
   const datasets = statistics.map((lot, i) => {
-    // Build a map of hour → avgAvailableSpaces for quick lookup
+    // Build a map of hour → avg_available_spaces for quick lookup
     const map = {};
-    lot.occupancyRates?.forEach((entry) => {
-      map[entry.hour] = entry.avgAvailableSpaces;
+    lot.occupancy_rates?.forEach((entry) => {
+      map[entry.hour] = entry.avg_available_spaces;
     });
 
-    // Convert avgAvailableSpaces → occupancy % so the chart stays 0-100
-    const occupancyData = sortedHours.map((hour) => {
+    // Convert avg_available_spaces → occupancy % so the chart stays 0-100
+    const occupancy_data = sorted_hours.map((hour) => {
       const avail = map[hour];
-      if (avail == null || !lot.totalSpaces) return null;
-      return parseFloat((((lot.totalSpaces - avail) / lot.totalSpaces) * 100).toFixed(1));
+      if (avail == null || !lot.total_spaces) return null;
+      return parseFloat((((lot.total_spaces - avail) / lot.total_spaces) * 100).toFixed(1));
     });
 
     return {
       label: lot.name?.split("–")[0].trim() ?? `Lot ${i + 1}`,
-      data: occupancyData,
+      data: occupancy_data,
       borderColor: LOT_COLORS[i % LOT_COLORS.length],
       backgroundColor: LOT_COLORS[i % LOT_COLORS.length] + "22",
       borderWidth: 2,
@@ -79,7 +79,7 @@ const buildTrendData = (statistics) => {
 
 // ── Sub-components ────────────────────────────────────────────────────────────
 
-function StatCard({ label, value, sub, color }) {
+function stat_card({ label, value, sub, color }) {
   return (
     <div style={{
       background: "#1a1a1a",
@@ -96,7 +96,9 @@ function StatCard({ label, value, sub, color }) {
   );
 }
 
-function OccupancyBar({ rate, color }) {
+const Stat_Card = stat_card;
+
+function occupancy_bar({ rate, color }) {
   return (
     <div style={{ background: "#2a2a2a", borderRadius: 99, height: 8, width: "100%", overflow: "hidden" }}>
       <div style={{
@@ -111,7 +113,9 @@ function OccupancyBar({ rate, color }) {
 }
 
 // Loading skeleton card
-function SkeletonCard() {
+const Occupancy_Bar = occupancy_bar;
+
+function skeleton_card() {
   return (
     <div style={{
       background: "#1a1a1a",
@@ -135,7 +139,9 @@ function SkeletonCard() {
   );
 }
 
-function LotTable({ lots }) {
+const Skeleton_Card = skeleton_card;
+
+function lot_table({ lots }) {
   return (
     <div style={{
       background: "#1a1a1a",
@@ -162,30 +168,30 @@ function LotTable({ lots }) {
         <tbody>
           {lots.map((lot, i) => (
             <tr
-              key={lot.lotID}
+              key={lot.lot_id}
               style={{ borderTop: "1px solid rgba(255,255,255,0.05)" }}
               onMouseEnter={(e) => (e.currentTarget.style.background = "#222")}
               onMouseLeave={(e) => (e.currentTarget.style.background = "transparent")}
             >
               {/* lot.name comes directly from the API */}
               <td style={{ padding: "12px 16px", fontWeight: 600, color: "#f1f1f1" }}>{lot.name}</td>
-              {/* totalSpaces & availableSpaces come from the ParkingLot model */}
-              <td style={{ padding: "12px 16px", color: "#aaa" }}>{lot.totalSpaces ?? "—"}</td>
-              <td style={{ padding: "12px 16px", color: "#aaa" }}>{lot.availableSpaces ?? "—"}</td>
+              {/* total_spaces & available_spaces come from the ParkingLot model */}
+              <td style={{ padding: "12px 16px", color: "#aaa" }}>{lot.total_spaces ?? "—"}</td>
+              <td style={{ padding: "12px 16px", color: "#aaa" }}>{lot.available_spaces ?? "—"}</td>
               <td style={{ padding: "12px 16px", minWidth: 160 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <div style={{ flex: 1 }}>
-                    {/* occupancyRate comes from calculate_occupancy_rate() */}
-                    <OccupancyBar rate={lot.occupancyRate} color={LOT_COLORS[i % LOT_COLORS.length]} />
+                    {/* occupancy_rate comes from calculate_occupancy_rate() */}
+                    <Occupancy_Bar rate={lot.occupancy_rate} color={LOT_COLORS[i % LOT_COLORS.length]} />
                   </div>
                   <span style={{ fontSize: 13, fontWeight: 600, color: LOT_COLORS[i % LOT_COLORS.length], minWidth: 44 }}>
-                    {lot.occupancyRate?.toFixed(1)}%
+                    {lot.occupancy_rate?.toFixed(1)}%
                   </span>
                 </div>
               </td>
-              {/* peakTime comes from calculate_peak_time() */}
+              {/* peak_time comes from calculate_peak_time() */}
               <td style={{ padding: "12px 16px", color: "#555", fontSize: 13 }}>
-                {formatPeakTime(lot.peakTime)}
+                {format_peak_time(lot.peak_time)}
               </td>
             </tr>
           ))}
@@ -195,7 +201,9 @@ function LotTable({ lots }) {
   );
 }
 
-function TrendChart({ data }) {
+const Lot_Table = lot_table;
+
+function trend_chart({ data }) {
   const options = {
     responsive: true,
     maintainAspectRatio: false,
@@ -234,20 +242,22 @@ function TrendChart({ data }) {
   );
 }
 
-function BarComparison({ lots }) {
-  const chartData = {
+const Trend_Chart = trend_chart;
+
+function bar_comparison({ lots }) {
+  const chart_data = {
     labels: lots.map((l) => l.name?.split("–")[0].trim()),
     datasets: [
       {
         label: "Occupied",
-        // occupied = totalSpaces - availableSpaces (both from ParkingLot model)
-        data: lots.map((l) => (l.totalSpaces ?? 0) - (l.availableSpaces ?? 0)),
+        // occupied = total_spaces - available_spaces (both from ParkingLot model)
+        data: lots.map((l) => (l.total_spaces ?? 0) - (l.available_spaces ?? 0)),
         backgroundColor: "#D72B2B",
         borderRadius: 4,
       },
       {
         label: "Available",
-        data: lots.map((l) => l.availableSpaces ?? 0),
+        data: lots.map((l) => l.available_spaces ?? 0),
         backgroundColor: "rgba(215,43,43,0.2)",
         borderRadius: 4,
       },
@@ -281,64 +291,66 @@ function BarComparison({ lots }) {
         Spaces by lot
       </h2>
       <div style={{ height: 220 }}>
-        <Bar data={chartData} options={options} />
+        <Bar data={chart_data} options={options} />
       </div>
     </div>
   );
 }
 
+const Bar_Comparison = bar_comparison;
+
 // ── Main Dashboard ─────────────────────────────────────────────────────────────
 
-export default function AdminDashboard() {
+export default function admin_dashboard() {
   // Date range state — sent as query params to GET api/admin/statistics/
   const today = new Date().toISOString().split("T")[0];
-  const [startDate, setStartDate] = useState(today);
-  const [endDate,   setEndDate]   = useState(today);
+  const [start_date, set_start_date] = useState(today);
+  const [end_date,   set_end_date]   = useState(today);
 
   // API response state
-  const [statistics, setStatistics] = useState([]);  // array from response.statistics
-  const [dateRange,  setDateRange]  = useState("");   // string from response.dateRange
-  const [loading,    setLoading]    = useState(true);
-  const [error,      setError]      = useState("");
+  const [statistics, set_statistics] = useState([]);  // array from response.statistics
+  const [date_range,  set_date_range]  = useState("");   // string from response.date_range
+  const [loading,    set_loading]    = useState(true);
+  const [error,      set_error]      = useState("");
 
   // ── Fetch statistics from GET api/admin/statistics/?start=...&end=... ────────
-  const fetchStatistics = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const fetch_statistics = useCallback(async () => {
+    set_loading(true);
+    set_error("");
     try {
       // client.js automatically attaches the Bearer token from localStorage
       const response = await client.get("admin/statistics/", {
-        params: { start: startDate, end: endDate },
+        params: { start: start_date, end: end_date },
       });
-      // response.data shape: { dateRange: "...", statistics: [...] }
-      setStatistics(response.data.statistics ?? []);
-      setDateRange(response.data.dateRange ?? "");
+      // response.data shape: { date_range: "...", statistics: [...] }
+      set_statistics(response.data.statistics ?? []);
+      set_date_range(response.data.date_range ?? "");
     } catch (err) {
       if (err.response?.status === 403) {
-        setError("You do not have permission to view this page.");
+        set_error("You do not have permission to view this page.");
       } else {
-        setError("Failed to load statistics. Please try again.");
+        set_error("Failed to load statistics. Please try again.");
       }
     } finally {
-      setLoading(false);
+      set_loading(false);
     }
-  }, [startDate, endDate]);
+  }, [start_date, end_date]);
 
   // Re-fetch whenever the date range changes
   useEffect(() => {
-    fetchStatistics();
-  }, [fetchStatistics]);
+    fetch_statistics();
+  }, [fetch_statistics]);
 
   // ── Aggregate stats (same logic as before, now from real data) ───────────────
-  const totalSpaces    = statistics.reduce((s, l) => s + (l.totalSpaces    ?? 0), 0);
-  const totalAvailable = statistics.reduce((s, l) => s + (l.availableSpaces ?? 0), 0);
-  const totalOccupied  = totalSpaces - totalAvailable;
-  const avgOccupancy   = statistics.length
-    ? (statistics.reduce((s, l) => s + (l.occupancyRate ?? 0), 0) / statistics.length).toFixed(1)
+  const total_spaces    = statistics.reduce((s, l) => s + (l.total_spaces    ?? 0), 0);
+  const total_available = statistics.reduce((s, l) => s + (l.available_spaces ?? 0), 0);
+  const total_occupied  = total_spaces - total_available;
+  const avg_occupancy   = statistics.length
+    ? (statistics.reduce((s, l) => s + (l.occupancy_rate ?? 0), 0) / statistics.length).toFixed(1)
     : "0.0";
 
-  // Build trend chart data from the occupancyRates arrays in each lot object
-  const trendData = buildTrendData(statistics);
+  // Build trend chart data from the occupancy_rates arrays in each lot object
+  const trend_data = build_trend_data(statistics);
 
   // ─── Render ────────────────────────────────────────────────────────────────
   return (
@@ -381,9 +393,9 @@ export default function AdminDashboard() {
                   Admin Dashboard
                 </span>
               </h1>
-              {/* Shows the dateRange string returned by the API e.g. "2024-03-01 to 2024-03-31" */}
+              {/* Shows the date_range string returned by the API e.g. "2024-03-01 to 2024-03-31" */}
               <p style={{ margin: "3px 0 0", color: "#555", fontSize: 13 }}>
-                {dateRange ? `Showing: ${dateRange}` : "Real-time overview of all parking lots"}
+                {date_range ? `Showing: ${date_range}` : "Real-time overview of all parking lots"}
               </p>
             </div>
           </div>
@@ -395,14 +407,14 @@ export default function AdminDashboard() {
             borderRadius: 10, padding: "8px 14px", fontSize: 14,
           }}>
             <input
-              type="date" value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              type="date" value={start_date}
+              onChange={(e) => set_start_date(e.target.value)}
               style={{ border: "none", outline: "none", fontSize: 14, color: "#aaa", background: "transparent" }}
             />
             <span style={{ color: "#D72B2B", fontWeight: 700 }}>→</span>
             <input
-              type="date" value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              type="date" value={end_date}
+              onChange={(e) => set_end_date(e.target.value)}
               style={{ border: "none", outline: "none", fontSize: 14, color: "#aaa", background: "transparent" }}
             />
           </div>
@@ -430,13 +442,13 @@ export default function AdminDashboard() {
         }}>
           {loading ? (
             // Show skeletons while fetching
-            [0,1,2,3].map((i) => <SkeletonCard key={i} />)
+            [0,1,2,3].map((i) => <Skeleton_Card key={i} />)
           ) : (
             <>
-              <StatCard label="Total Spaces"  value={totalSpaces}        sub="Across all lots"   color="#D72B2B" />
-              <StatCard label="Occupied"      value={totalOccupied}      sub="Right now"         color="#F5A623" />
-              <StatCard label="Available"     value={totalAvailable}     sub="Right now"         color="#e05c2a" />
-              <StatCard label="Avg Occupancy" value={`${avgOccupancy}%`} sub="All lots combined" color="#c44f7a" />
+              <Stat_Card label="Total Spaces"  value={total_spaces}        sub="Across all lots"   color="#D72B2B" />
+              <Stat_Card label="Occupied"      value={total_occupied}      sub="Right now"         color="#F5A623" />
+              <Stat_Card label="Available"     value={total_available}     sub="Right now"         color="#e05c2a" />
+              <Stat_Card label="Avg Occupancy" value={`${avg_occupancy}%`} sub="All lots combined" color="#c44f7a" />
             </>
           )}
         </div>
@@ -447,16 +459,16 @@ export default function AdminDashboard() {
             display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
             gap: 16, marginBottom: "1.5rem",
           }}>
-            {/* trendData is built from statistics[].occupancyRates arrays */}
-            <TrendChart data={trendData} />
-            {/* BarComparison uses totalSpaces & availableSpaces per lot */}
-            <BarComparison lots={statistics} />
+            {/* trend_data is built from statistics[].occupancy_rates arrays */}
+            <Trend_Chart data={trend_data} />
+            {/* Bar_Comparison uses total_spaces & available_spaces per lot */}
+            <Bar_Comparison lots={statistics} />
           </div>
         )}
 
         {/* ── Lot table ────────────────────────────────────────────────────── */}
         {!loading && !error && statistics.length > 0 && (
-          <LotTable lots={statistics} />
+          <Lot_Table lots={statistics} />
         )}
 
         {/* Empty state */}
@@ -473,3 +485,5 @@ export default function AdminDashboard() {
     </>
   );
 }
+
+

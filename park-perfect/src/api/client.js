@@ -17,17 +17,19 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response,
     (error) => {
-        const requestUrl = error.config?.url ?? '';
-        const isLoginRequest = requestUrl.includes('login/');
-        const isAdminRequest = requestUrl.includes('admin/') || requestUrl.includes('panel/');
+        const request_url = error.config?.url ?? '';
+        const is_login_request = request_url.includes('login/');
+        const is_admin_request = request_url.includes('admin/') || request_url.includes('panel/');
 
-        if (error.response?.status === 401 && !isLoginRequest) {
+        if (error.response?.status === 401 && !is_login_request) {
             localStorage.removeItem('access');
             localStorage.removeItem('refresh');
-            window.location.href = isAdminRequest ? '/admin/login' : '/login';
+            window.location.href = is_admin_request ? '/admin/login' : '/login';
         }
         return Promise.reject(error);
     }
 );
 
 export default client;
+
+

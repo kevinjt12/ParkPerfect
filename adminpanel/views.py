@@ -8,13 +8,13 @@ from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.tokens import RefreshToken
 from datetime import date
 
-from users.models import User
-from users.serializers import UserSerializer
+from users.models import user
+from users.serializers import user_serializer
 from parking.services import get_lots
 
 from .services import calculate_statistics, generate_report, get_report
-from .models import StatisticsReport
-from .serializers import StatisticsReportSerializer
+from .models import statistics_report
+from .serializers import statistics_report_serializer
 
 import csv
 import io
@@ -25,13 +25,13 @@ from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.lib.units import inch
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-class AdminAuthView(APIView):
+class admin_auth_view(APIView):
     #base view for all admin endpoints. Requires that is_staff =true
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAdminUser]
 
     
-class StatisticsView(AdminAuthView):
+class statistics_view(admin_auth_view):
     permission_classes = [AllowAny]
 
     def get(self, request):
@@ -41,16 +41,16 @@ class StatisticsView(AdminAuthView):
         statistics = calculate_statistics(lots, start_date, end_date)
 
         return Response({
-            'dateRange': f'{start_date} to {end_date}',
+            'date_range': f'{start_date} to {end_date}',
             'statistics': statistics
         })
     
-class AdminLogin(APIView):
+class admin_login(APIView):
     #This is the same methodology as the user login, but just checks if_staff is true instead of just if the user exists
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request, username=email, password=password)
 
         if user is None:
             return Response({'error': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -61,9 +61,10 @@ class AdminLogin(APIView):
         return Response({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
-            'user': UserSerializer(user).data
+            'user': user_serializer(user).data
         })
-class AdminLogout(AdminAuthView):
+class admin_logout(admin_auth_view):
+    #logout for admin class, blacklists the refresh token to prevent further use
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -78,8 +79,9 @@ class AdminLogout(AdminAuthView):
 
 # ====================== REPORTING VIEWS ======================
 
-class GenerateReportView(APIView):
+class generate_report_view(APIView):
     """POST /api/admin/reports/generate/"""
+    #generates a report for the given date range and saves it to the database. Returns the report ID and date range for reference
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
 
@@ -91,12 +93,13 @@ class GenerateReportView(APIView):
 
         return Response({
             'message': 'Report generated successfully',
-            'report_id': report.reportID,
-            'dateRange': report.dateRange
+            'report_id': report.report_id,
+            'date_range': report.date_range
         }, status=status.HTTP_201_CREATED)
 
 
-class ReportDetailView(APIView):
+class report_detail_view(APIView):
+    # retrieves a report by ID and returns the full details, including the statistics for each parking lot. This is used for viewing the report in the admin panel, while the export view is used for downloading the report in PDF or CSV format.
     """GET /api/admin/reports/{id}/"""
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
@@ -106,11 +109,12 @@ class ReportDetailView(APIView):
         if not report:
             return Response({'error': 'Report not found'}, status=status.HTTP_404_NOT_FOUND)
 
-        serializer = StatisticsReportSerializer(report)
+        serializer = statistics_report_serializer(report)
         return Response(serializer.data)
 
 
-class ReportExportView(APIView):
+class report_export_view(APIView):
+    # This endpoint allows admins to export a report in either PDF or CSV format. The report is generated on the fly based on the stored statistics for the given report ID. The PDF export uses ReportLab to create a well-formatted document, while the CSV export uses Python's built-in csv module to create a simple comma-separated file. The exported file is then returned as an attachment in the HTTP response for download.
     """GET /api/admin/reports/{id}/export/?format=pdf|csv"""
     permission_classes = [IsAdminUser]
     authentication_classes = [JWTAuthentication]
@@ -131,6 +135,7 @@ class ReportExportView(APIView):
                             status=status.HTTP_400_BAD_REQUEST)
 
     def _export_pdf(self, report):
+        #export to PDF using ReportLab
         buffer = io.BytesIO()
         doc = SimpleDocTemplate(buffer, pagesize=letter, 
                                 leftMargin=inch, rightMargin=inch,
@@ -139,11 +144,11 @@ class ReportExportView(APIView):
         styler = getSampleStyleSheet()
         story = []
 
-        story.append(Paragraph(f"Parking Lot Statistics Report #{report.reportID}", styler['Title']))
+        story.append(Paragraph(f"Parking Lot Statistics Report #{report.report_id}", styler['Title']))
         story.append(Spacer(1, 0.25 * inch))
         
         story.append(Paragraph(
-            f"Date Range: {report.dateRange.get('start')} – {report.dateRange.get('end')}", 
+            f"Date Range: {report.date_range.get('start')} – {report.date_range.get('end')}", 
             styler['Normal']
         ))
         story.append(Paragraph(
@@ -158,9 +163,9 @@ class ReportExportView(APIView):
         for stat in report.statistics or []:
             table_data.append([
                 stat.get('name', 'N/A'),
-                stat.get('totalSpaces', 0),
-                f"{stat.get('occupancyRate', 0):.1f}",
-                stat.get('peakTime', 'N/A')
+                stat.get('total_spaces', 0),
+                f"{stat.get('occupancy_rate', 0):.1f}",
+                stat.get('peak_time', 'N/A')
             ])
 
         table = Table(table_data, colWidths=[2.5*inch, inch, inch, 1.8*inch])
@@ -177,10 +182,11 @@ class ReportExportView(APIView):
 
         buffer.seek(0)
         response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
-        response['Content-Disposition'] = f'attachment; filename="parking_report_{report.reportID}.pdf"'
+        response['Content-Disposition'] = f'attachment; filename="parking_report_{report.report_id}.pdf"'
         return response
 
     def _export_csv(self, report):
+        #export to CSV
         buffer = io.StringIO()
         writer = csv.writer(buffer)
         
@@ -190,12 +196,13 @@ class ReportExportView(APIView):
         for stat in report.statistics or []:
             writer.writerow([
                 stat.get('name'),
-                stat.get('totalSpaces'),
-                stat.get('availableSpaces'),
-                round(stat.get('occupancyRate', 0), 2),
-                stat.get('peakTime', 'N/A')
+                stat.get('total_spaces'),
+                stat.get('available_spaces'),
+                round(stat.get('occupancy_rate', 0), 2),
+                stat.get('peak_time', 'N/A')
             ])
 
         response = HttpResponse(buffer.getvalue(), content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="parking_report_{report.reportID}.csv"'
+        response['Content-Disposition'] = f'attachment; filename="parking_report_{report.report_id}.csv"'
         return response
+

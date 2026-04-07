@@ -1,28 +1,35 @@
 from django.db import models
-from users.models import User
+from users.models import user
 
-class ParkingLot(models.Model):
-    lotID = models.AutoField(primary_key=True)
+class parking_lot(models.Model):
+    lot_id = models.AutoField(primary_key=True, db_column='lotID')
     name = models.CharField(max_length=200)
     latitude = models.DecimalField(max_digits=9, decimal_places=6)
     longitude = models.DecimalField(max_digits=9, decimal_places=6)
-    totalSpaces = models.IntegerField()
-    availableSpaces = models.IntegerField()
-    catalogID = models.IntegerField(default=1)
+    total_spaces = models.IntegerField(db_column='totalSpaces')
+    available_spaces = models.IntegerField(db_column='availableSpaces')
+    catalog_id = models.IntegerField(default=1, db_column='catalogID')
 
     @property
-    def occupancyRate(self):
-        if self.totalSpaces == 0:
+    def occupancy_rate(self):
+        if self.total_spaces == 0:
             return 0.0
-        return (self.totalSpaces - self.availableSpaces) / self.totalSpaces * 100
+        return (self.total_spaces - self.available_spaces) / self.total_spaces * 100
 
-class ParkingEvent(models.Model):
+    class Meta:
+        db_table = 'parking_parkinglot'
+
+class parking_event(models.Model):
     PARKED = 'PARKED'
     LEFT = 'LEFT'
     EVENT_CHOICES = [(PARKED, 'Parked'), (LEFT, 'Left')]
 
-    eventID = models.AutoField(primary_key=True)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    lot = models.ForeignKey(ParkingLot, on_delete=models.CASCADE)
-    eventType = models.CharField(max_length=10, choices=EVENT_CHOICES)
+    event_id = models.AutoField(primary_key=True, db_column='eventID')
+    user = models.ForeignKey(user, on_delete=models.CASCADE)
+    lot = models.ForeignKey(parking_lot, on_delete=models.CASCADE)
+    event_type = models.CharField(max_length=10, choices=EVENT_CHOICES, db_column='eventType')
     timestamp = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'parking_parkingevent'
+

@@ -2,9 +2,9 @@
 seed_users.py
 
 Generates realistic fake users compatible with the custom User model:
-  - Primary key: userID (AutoField)
+  - Primary key: user_id (AutoField)
   - Login field: email (unique)
-  - Name fields: firstName, lastName
+  - Name fields: first_name, last_name
   - No username column
   - Also seeds Vehicle records for each user
 
@@ -100,8 +100,8 @@ def main():
         conn.close()
         return
  
-    # Insert one by one so we can capture each returned userID reliably
-    inserted_users = []  # [(userID, email), ...]
+    # Insert one by one so we can capture each returned user_id reliably
+    inserted_users = []  # [(user_id, email), ...]
     for u in users:
         cur.execute(
             f"""
@@ -144,7 +144,7 @@ def main():
     print("Sample users created:")
     for uid, email in inserted_users[:5]:
         u = next(u for u in users if u[2] == email)
-        print(f"  userID={uid}  name={u[0]} {u[1]}  email={email}")
+        print(f"  user_id={uid}  name={u[0]} {u[1]}  email={email}")
     if len(inserted_users) > 5:
         print(f"  ... and {len(inserted_users) - 5} more.\n")
  

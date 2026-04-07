@@ -1,26 +1,26 @@
 from django.db.models import Count, Avg, ExpressionWrapper, IntegerField
 from django.db.models.functions import TruncHour, ExtractHour
-from parking.models import ParkingLot, ParkingEvent
+from parking.models import parking_lot, parking_event
 from parking.services import get_lots
-from users.models import User
+from users.models import user
 from django.db.models import F
 import datetime
-from .models import StatisticsReport
+from .models import statistics_report
 from django.utils import timezone
 
 def calculate_occupancy_rate(lot):
     #Calculates the occupancy rate for a single lot.
-    if lot.totalSpaces == 0:
+    if lot.total_spaces == 0:
         return 0.0
-    return (lot.totalSpaces - lot.availableSpaces) / lot.totalSpaces * 100
+    return (lot.total_spaces - lot.available_spaces) / lot.total_spaces * 100
 
 
 def calculate_peak_time(lot, start_date, end_date):
     #Returns the peak hour string for a single lot over a date range.
     peak_hours = (
-        ParkingEvent.objects.filter(
+        parking_event.objects.filter(
             lot=lot,
-            eventType=ParkingEvent.PARKED,
+            event_type=parking_event.PARKED,
             timestamp__date__gte=start_date,
             timestamp__date__lte=end_date,
         )
@@ -28,7 +28,7 @@ def calculate_peak_time(lot, start_date, end_date):
         .annotate(hour=TruncHour('timestamp'))
         .values('hour')
         #counts number of events in each hour
-        .annotate(count=Count('eventID'))
+        .annotate(count=Count('event_id'))
         .order_by('-count')
     )
     peak_time = peak_hours.first()
@@ -36,33 +36,34 @@ def calculate_peak_time(lot, start_date, end_date):
 
 
 def calculate_occupancy_trend(lot, start_date, end_date):
+    #Calculates the occupancy trend for a single lot over a date range.
     start = datetime.date.fromisoformat(str(start_date))
     end   = datetime.date.fromisoformat(str(end_date))
     num_days = max((end - start).days + 1, 1)
 
     parked_by_hour = (
-        ParkingEvent.objects.filter(
+        parking_event.objects.filter(
             lot=lot,
-            eventType=ParkingEvent.PARKED,
+            event_type=parking_event.PARKED,
             timestamp__date__gte=start_date,
             timestamp__date__lte=end_date,
         )
         .annotate(hour_of_day=ExtractHour('timestamp'))
         .values('hour_of_day')
-        .annotate(count=Count('eventID'))
+        .annotate(count=Count('event_id'))
         .order_by('hour_of_day')
     )
 
     left_by_hour = (
-        ParkingEvent.objects.filter(
+        parking_event.objects.filter(
             lot=lot,
-            eventType=ParkingEvent.LEFT,
+            event_type=parking_event.LEFT,
             timestamp__date__gte=start_date,
             timestamp__date__lte=end_date,
         )
         .annotate(hour_of_day=ExtractHour('timestamp'))
         .values('hour_of_day')
-        .annotate(count=Count('eventID'))
+        .annotate(count=Count('event_id'))
         .order_by('hour_of_day')
     )
 
@@ -73,12 +74,12 @@ def calculate_occupancy_trend(lot, start_date, end_date):
     for hour in range(24):
         avg_parked    = parked_map.get(hour, 0) / num_days
         avg_left      = left_map.get(hour, 0)   / num_days
-        net_occupied  = max(0, min(avg_parked - avg_left, lot.totalSpaces))
-        avg_available = lot.totalSpaces - net_occupied
+        net_occupied  = max(0, min(avg_parked - avg_left, lot.total_spaces))
+        avg_available = lot.total_spaces - net_occupied
 
         result.append({
             'hour': f"{start_date} {hour:02d}:00:00",  # int → formatted string, no strftime needed
-            'avgAvailableSpaces': avg_available,
+            'avg_available_spaces': avg_available,
         })
 
     return result
@@ -91,36 +92,35 @@ def calculate_statistics(lots, start_date, end_date):
         return results
     for lot in lots:
         results.append({
-            'lotID': lot.lotID,
+            'lot_id': lot.lot_id,
             'name': lot.name,
-            'totalSpaces': lot.totalSpaces,
-            'availableSpaces': lot.availableSpaces,
+            'total_spaces': lot.total_spaces,
+            'available_spaces': lot.available_spaces,
 
-            'occupancyRate': calculate_occupancy_rate(lot),
-            'peakTime': calculate_peak_time(lot, start_date, end_date),
-            'occupancyRates': calculate_occupancy_trend(lot, start_date, end_date),
+            'occupancy_rate': calculate_occupancy_rate(lot),
+            'peak_time': calculate_peak_time(lot, start_date, end_date),
+            'occupancy_rates': calculate_occupancy_trend(lot, start_date, end_date),
         })
     return results
 
 def verify_admin(admin_id, password):
     #Verifies if the provided credentials belong to an admin user.
     try:
-        admin = User.objects.get(id=admin_id, is_staff=True)
+        admin = user.objects.get(pk=admin_id, is_staff=True)
         return admin.check_password(password)
-    except User.DoesNotExist:
+    except user.DoesNotExist:
         return False
     
 def generate_report(start_date, end_date, lots=None):
-    """
-    Generates and persists a StatisticsReport.
-    """
+    #Generates and persists a statistics_report.
+   
     if lots is None:
         lots = get_lots()
 
     stats_data = calculate_statistics(lots, start_date, end_date)
 
-    report = StatisticsReport.objects.create(
-        dateRange={
+    report = statistics_report.objects.create(
+        date_range={
             'start': str(start_date),
             'end': str(end_date)
         },
@@ -131,8 +131,9 @@ def generate_report(start_date, end_date, lots=None):
 
 
 def get_report(report_id):
-    """Retrieve a single report by ID"""
+    #Retrieve a single report by ID
     try:
-        return StatisticsReport.objects.get(pk=report_id)
-    except StatisticsReport.DoesNotExist:
+        return statistics_report.objects.get(pk=report_id)
+    except statistics_report.DoesNotExist:
         return None
+

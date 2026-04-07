@@ -1,54 +1,54 @@
 from rest_framework import serializers
-from .models import User, Vehicle
+from .models import user, vehicle
 
 
-# ── Vehicle ───────────────────────────────────────────────────
+# ── vehicle ───────────────────────────────────────────────────
 
-class VehicleSerializer(serializers.ModelSerializer):
+class vehicle_serializer(serializers.ModelSerializer):
     class Meta:
-        model = Vehicle
-        fields = ['vehicleID', 'licensePlateNumber', 'licensePlateState']
+        model = vehicle
+        fields = ['vehicle_id', 'license_plate_number', 'license_plate_state']
 
 
-# ── User ──────────────────────────────────────────────────────
+# ── user ──────────────────────────────────────────────────────
 
-class UserSerializer(serializers.ModelSerializer):
+class user_serializer(serializers.ModelSerializer):
     """Read-only full user profile, including nested vehicles."""
-    vehicles = VehicleSerializer(many=True, read_only=True)
+    vehicles = vehicle_serializer(many=True, read_only=True)
 
     class Meta:
-        model = User
-        fields = ['userID', 'firstName', 'lastName', 'email', 'vehicles']
+        model = user
+        fields = ['user_id', 'first_name', 'last_name', 'email', 'vehicles']
 
 
-class UserRegistrationSerializer(serializers.ModelSerializer):
-    """Used by RegisterView (POST /api/auth/register/)."""
+class user_registration_serializer(serializers.ModelSerializer):
+    """Used by register_view (POST /api/auth/register/)."""
 
     class Meta:
-        model = User
-        fields = ['firstName', 'lastName', 'email', 'password']
+        model = user
+        fields = ['first_name', 'last_name', 'email', 'password']
         extra_kwargs = {'password': {'write_only': True}}
 
     def create(self, validated_data):
-        return User.objects.create_user(**validated_data)
+        return user.objects.create_user(**validated_data)
 
 
-class UserLoginSerializer(serializers.Serializer):
+class user_login_serializer(serializers.Serializer):
     """
-    Validates the email/password payload for LoginView.
+    Validates the email/password payload for login_view.
     Does not touch the database — authentication is done in the view.
     """
     email = serializers.EmailField()
     password = serializers.CharField(write_only=True)
 
 
-class ChangeNameSerializer(serializers.Serializer):
+class change_name_serializer(serializers.Serializer):
     """PATCH /api/user/name/ — both fields are optional so partial updates work."""
-    firstName = serializers.CharField(max_length=100, required=False)
-    lastName = serializers.CharField(max_length=100, required=False)
+    first_name = serializers.CharField(max_length=100, required=False)
+    last_name = serializers.CharField(max_length=100, required=False)
 
 
-class ChangeEmailSerializer(serializers.Serializer):
+class change_email_serializer(serializers.Serializer):
     """PATCH /api/user/email/"""
     email = serializers.EmailField()
 
@@ -56,21 +56,22 @@ class ChangeEmailSerializer(serializers.Serializer):
         # Uniqueness check is also enforced in the view, but validating here
         # gives a clean serializer error response.
         request_user = self.context.get('request_user')
-        if User.objects.filter(email=value).exclude(pk=request_user.pk).exists():
+        if user.objects.filter(email=value).exclude(pk=request_user.pk).exists():
             raise serializers.ValidationError('This email is already in use.')
         return value
 
 
-class ChangePasswordSerializer(serializers.Serializer):
+class change_password_serializer(serializers.Serializer):
     """
     PATCH /api/user/password/
     Requires the current password for verification (plan section 4.1).
     """
-    currentPassword = serializers.CharField(write_only=True)
-    newPassword = serializers.CharField(write_only=True, min_length=8)
+    current_password = serializers.CharField(write_only=True)
+    new_password = serializers.CharField(write_only=True, min_length=8)
 
 
-class ChangePlateSerializer(serializers.Serializer):
+class change_plate_serializer(serializers.Serializer):
     """PATCH /api/user/plate/"""
-    licensePlateNumber = serializers.CharField(max_length=20)
-    licensePlateState = serializers.CharField(max_length=2)
+    license_plate_number = serializers.CharField(max_length=20)
+    license_plate_state = serializers.CharField(max_length=2)
+

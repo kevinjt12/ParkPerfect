@@ -1,16 +1,16 @@
 import { useState } from 'react';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../AuthContext';
+import { use_auth } from '../Auth_Context';
 
-function getErrorMessage(error) {
-  const responseData = error.response?.data;
+function get_error_message(error) {
+  const response_data = error.response?.data;
 
-  if (responseData?.error) {
-    return responseData.error;
+  if (response_data?.error) {
+    return response_data.error;
   }
 
-  if (responseData && typeof responseData === 'object') {
-    const [field, value] = Object.entries(responseData)[0] ?? [];
+  if (response_data && typeof response_data === 'object') {
+    const [field, value] = Object.entries(response_data)[0] ?? [];
 
     if (Array.isArray(value) && value[0]) {
       return `${field}: ${value[0]}`;
@@ -24,33 +24,33 @@ function getErrorMessage(error) {
   return 'Unable to sign in right now. Please try again.';
 }
 
-export default function LoginPage() {
-  const { isAuthenticated, login } = useAuth();
+export default function login_page() {
+  const { is_authenticated, login } = use_auth();
   const navigate = useNavigate();
   const location = useLocation();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [email, set_email] = useState('');
+  const [password, set_password] = useState('');
+  const [error_message, set_error_message] = useState('');
+  const [is_submitting, set_is_submitting] = useState(false);
 
   const destination = location.state?.from?.pathname || '/map';
 
-  if (isAuthenticated) {
+  if (is_authenticated) {
     return <Navigate replace to={destination} />;
   }
 
-  const handleSubmit = async (event) => {
+  const handle_submit = async (event) => {
     event.preventDefault();
-    setErrorMessage('');
-    setIsSubmitting(true);
+    set_error_message('');
+    set_is_submitting(true);
 
     try {
       await login(email, password);
       navigate('/map', { replace: true });
     } catch (error) {
-      setErrorMessage(getErrorMessage(error));
+      set_error_message(get_error_message(error));
     } finally {
-      setIsSubmitting(false);
+      set_is_submitting(false);
     }
   };
 
@@ -76,13 +76,13 @@ export default function LoginPage() {
           </p>*/}
         </div>
 
-        <form className="auth-form" onSubmit={handleSubmit}>
+        <form className="auth-form" onSubmit={handle_submit}>
           <label className="field">
             <span>Email</span>
             <input
               autoComplete="email"
               name="email"
-              onChange={(event) => setEmail(event.target.value)}
+              onChange={(event) => set_email(event.target.value)}
               placeholder="you@example.com"
               required
               type="email"
@@ -95,7 +95,7 @@ export default function LoginPage() {
             <input
               autoComplete="current-password"
               name="password"
-              onChange={(event) => setPassword(event.target.value)}
+              onChange={(event) => set_password(event.target.value)}
               placeholder="Enter your password"
               required
               type="password"
@@ -103,13 +103,15 @@ export default function LoginPage() {
             />
           </label>
 
-          {errorMessage ? <p className="form-message form-message--error">{errorMessage}</p> : null}
+          {error_message ? <p className="form-message form-message--error">{error_message}</p> : null}
 
-          <button className="primary-button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Signing in...' : 'Enter live map'}
+          <button className="primary-button" disabled={is_submitting} type="submit">
+            {is_submitting ? 'Signing in...' : 'Enter live map'}
           </button>
         </form>
       </section>
     </main>
   );
 }
+
+

@@ -1,6 +1,6 @@
 let socket = null;
 
-export const connectSocket = (onMessage) => {
+export const connect_socket = (on_message) => {
     socket = new WebSocket('ws://localhost:8000/ws/map/');
 
     socket.onopen = () => {
@@ -9,7 +9,7 @@ export const connectSocket = (onMessage) => {
 
     socket.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        onMessage(data);
+        on_message(data);
     };
 
     socket.onclose = () => {
@@ -21,9 +21,10 @@ export const connectSocket = (onMessage) => {
     };
 };
 
-export const disconnectSocket = () => {
+export const disconnect_socket = () => {
     if (socket) {
         socket.close();
         socket = null;
     }
 };
+

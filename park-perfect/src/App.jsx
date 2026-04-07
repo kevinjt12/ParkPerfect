@@ -1,34 +1,38 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
-import { useAuth } from './AuthContext';
-import ProtectedRoute from './ProtectedRoute';
-import LoginPage from './pages/LoginPage';
-import MapPage from './pages/MapPage';
-import SettingsPage from './pages/SettingsPage';
-import AdminLogin from './pages/admin/AdminLogin';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminReports from './pages/admin/AdminReports';
+import { use_auth } from './Auth_Context';
+import Protected_Route from './Protected_Route';
+import Login_Page from './pages/Login_Page';
+import Map_Page from './pages/Map_Page';
+import Settings_Page from './pages/Settings_Page';
+import Admin_Login from './pages/admin/Admin_Login';
+import Admin_Dashboard from './pages/admin/Admin_Dashboard';
+import Admin_Reports from './pages/admin/Admin_Reports';
 
-function HomeRedirect() {
-  const { isAuthenticated } = useAuth();
+function home_redirect() {
+  const { is_authenticated } = use_auth();
 
-  return <Navigate replace to={isAuthenticated ? '/map' : '/login'} />;
+  return <Navigate replace to={is_authenticated ? '/map' : '/login'} />;
 }
 
-function App() {
+const Home_Redirect = home_redirect;
+
+function app_root() {
   return (
     <Routes>
-      <Route path="/login" element={<LoginPage />} />
-      <Route element={<ProtectedRoute />}>
-        <Route path="/map" element={<MapPage />} />
-        <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/login" element={<Login_Page />} />
+      <Route element={<Protected_Route />}>
+        <Route path="/map" element={<Map_Page />} />
+        <Route path="/settings" element={<Settings_Page />} />
       </Route>
-      <Route path="/admin/login" element={<AdminLogin />} />
-      <Route path="/admin/dashboard" element={<AdminDashboard />} />
-      <Route path="/admin/reports" element={<AdminReports />} />
-      <Route path="/" element={<HomeRedirect />} />
-      <Route path="*" element={<HomeRedirect />} />
+      <Route path="/admin/login" element={<Admin_Login />} />
+      <Route path="/admin/dashboard" element={<Admin_Dashboard />} />
+      <Route path="/admin/reports" element={<Admin_Reports />} />
+      <Route path="/" element={<Home_Redirect />} />
+      <Route path="*" element={<Home_Redirect />} />
     </Routes>
   );
 }
 
-export default App;
+export default app_root;
+
+

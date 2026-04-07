@@ -1,18 +1,19 @@
 from rest_framework import serializers
-from .models import ParkingLot, ParkingEvent
+from .models import parking_lot, parking_event
 
-class ParkingLotSerializer(serializers.ModelSerializer):
-    occupancyRate = serializers.ReadOnlyField()
+class parking_lot_serializer(serializers.ModelSerializer):
+    occupancy_rate = serializers.ReadOnlyField()
 
     class Meta:
-        model = ParkingLot
+        model = parking_lot
         fields = [
-            'lotID', 'name', 'latitude', 'longitude',
-            'totalSpaces', 'availableSpaces', 'occupancyRate', 'catalogID'
+            'lot_id', 'name', 'latitude', 'longitude',
+            'total_spaces', 'available_spaces', 'occupancy_rate', 'catalog_id'
         ]
 
-class ParkingEventSerializer(serializers.ModelSerializer):
+class parking_event_serializer(serializers.ModelSerializer):
     class Meta:
-        model = ParkingEvent
-        fields = ['eventID', 'user', 'lot', 'eventType', 'timestamp']
+        model = parking_event
+        fields = ['event_id', 'user', 'lot', 'event_type', 'timestamp']
         read_only_fields = ['timestamp']
+

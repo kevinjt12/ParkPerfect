@@ -1,98 +1,113 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from parking.models import ParkingLot, ParkingEvent
+from parking.models import parking_lot, parking_event
 from parking.services import mark_parked, mark_left
-import pytest
+import unittest
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 import threading
 
-User = get_user_model()
+try:
+    import pytest
+except ModuleNotFoundError:
+    class _PytestShim:
+        class mark:
+            @staticmethod
+            def django_db(func):
+                return func
+
+        @staticmethod
+        def raises(exception_type):
+            return unittest.TestCase().assertRaises(exception_type)
+
+    pytest = _PytestShim()
+
+user = get_user_model()
 # commented out tests as they give issues with connecting to other pieces of the codebase at the moment.
 
 
-# TC-01: Parking a Vehicle
+# TC-01: Parking a vehicle
 @pytest.mark.django_db
 def test_park_returns_200(auth_client, lot):
-    response = auth_client.post("/parking/park/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/park/", {"lot_id": lot.lot_id})
     assert response.status_code == 200
 
 @pytest.mark.django_db
 def test_mark_parked_decrements_spaces(user, lot):
-    mark_parked(user.userID, lot.lotID)
+    mark_parked(user.user_id, lot.lot_id)
     lot.refresh_from_db()
-    assert lot.availableSpaces == 4
+    assert lot.available_spaces == 4
 
 @pytest.mark.django_db
 def test_mark_parked_creates_event(user, lot):
-    mark_parked(user.userID, lot.lotID)
-    event = ParkingEvent.objects.get(user_id=user.userID, lot=lot)
-    assert event.eventType == ParkingEvent.PARKED
+    mark_parked(user.user_id, lot.lot_id)
+    event = parking_event.objects.get(user_id=user.user_id, lot=lot)
+    assert event.event_type == parking_event.PARKED
 
 @pytest.mark.django_db
 def test_mark_parked_fails_when_lot_full(user, lot):
-    lot.availableSpaces = 0
+    lot.available_spaces = 0
     lot.save()
     with pytest.raises(ValueError):
-        mark_parked(user.userID, lot.lotID)
+        mark_parked(user.user_id, lot.lot_id)
 
 @pytest.mark.django_db
 def test_mark_parked_no_event_created_when_lot_full(user, lot):
-    lot.availableSpaces = 0
+    lot.available_spaces = 0
     lot.save()
     with pytest.raises(ValueError):
-        mark_parked(user.userID, lot.lotID)
-    assert ParkingEvent.objects.filter(user_id=user.userID).count() == 0
+        mark_parked(user.user_id, lot.lot_id)
+    assert parking_event.objects.filter(user_id=user.user_id).count() == 0
 
 # TC-02: Leaving a Parking Space
 @pytest.mark.django_db
 def test_leave_returns_200(auth_client, lot):
-    response = auth_client.post("/parking/leave/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/leave/", {"lot_id": lot.lot_id})
     assert response.status_code == 200
 
 @pytest.mark.django_db
 def test_mark_left_increments_spaces(user, lot):
-    mark_left(user.userID, lot.lotID)
+    mark_left(user.user_id, lot.lot_id)
     lot.refresh_from_db()
-    assert lot.availableSpaces == 6
+    assert lot.available_spaces == 6
 
 @pytest.mark.django_db
 def test_mark_left_creates_event(user, lot):
-    mark_left(user.userID, lot.lotID)
-    event = ParkingEvent.objects.get(user_id=user.userID, lot=lot)
-    assert event.eventType == ParkingEvent.LEFT
+    mark_left(user.user_id, lot.lot_id)
+    event = parking_event.objects.get(user_id=user.user_id, lot=lot)
+    assert event.event_type == parking_event.LEFT
 
 @pytest.mark.django_db
 def test_mark_left_fails_when_already_full(user, lot):
-    lot.availableSpaces = lot.totalSpaces
+    lot.available_spaces = lot.total_spaces
     lot.save()
     with pytest.raises(ValueError):
-        mark_left(user.userID, lot.lotID)
+        mark_left(user.user_id, lot.lot_id)
 
 @pytest.mark.django_db
 def test_mark_left_no_event_created_when_already_full(user, lot):
-    lot.availableSpaces = lot.totalSpaces
+    lot.available_spaces = lot.total_spaces
     lot.save()
     with pytest.raises(ValueError):
-        mark_left(user.userID, lot.lotID)
-    assert ParkingEvent.objects.filter(user_id=user.userID).count() == 0
+        mark_left(user.user_id, lot.lot_id)
+    assert parking_event.objects.filter(user_id=user.user_id).count() == 0
 
 # TC-03: Concurrent Parking Events
 def test_concurrent_parking_no_negative_spaces(db):
-    lot = ParkingLot.objects.create(
+    lot = parking_lot.objects.create(
         name="Test Lot",
-        totalSpaces=10,
-        availableSpaces=2,  # >=2 so both can succeed per TC-03
+        total_spaces=10,
+        available_spaces=2,  # >=2 so both can succeed per TC-03
         latitude=40.7128,
         longitude=-74.0060
     )
-    lot_id = lot.lotID
+    lot_id = lot.lot_id
 
     users = [
-        User.objects.create_user(email=f"user{i}@test.com", password="pass")
+        user.objects.create_user(email=f"user{i}@test.com", password="pass")
         for i in range(2)
     ]
-    user_ids = [u.userID for u in users]
+    user_ids = [u.user_id for u in users]
 
     errors = []
     def attempt_park(uid):
@@ -108,16 +123,16 @@ def test_concurrent_parking_no_negative_spaces(db):
         t.join()
 
     lot.refresh_from_db()
-    assert lot.availableSpaces == 0   # both succeeded, decremented by 2
+    assert lot.available_spaces == 0   # both succeeded, decremented by 2
     assert len(errors) == 0           # neither was rejected
-    assert lot.availableSpaces >= 0   # never went negative
+    assert lot.available_spaces >= 0   # never went negative
 
 # Parking Lot View Tests
 
 @pytest.mark.django_db
 def test_park_requires_authentication(lot):
     client = APIClient()
-    response = client.post("/parking/park/", {"lot_id": lot.lotID})
+    response = client.post("/parking/park/", {"lot_id": lot.lot_id})
     assert response.status_code == 401
 
 @pytest.mark.django_db
@@ -127,22 +142,22 @@ def test_park_missing_lot_id_returns_400(auth_client):
 
 @pytest.mark.django_db
 def test_park_full_lot_returns_400(auth_client, lot):
-    lot.availableSpaces = 0
+    lot.available_spaces = 0
     lot.save()
-    response = auth_client.post("/parking/park/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/park/", {"lot_id": lot.lot_id})
     assert response.status_code == 400
 
 @pytest.mark.django_db
 def test_leave_requires_authentication(lot):
     client = APIClient()
-    response = client.post("/parking/leave/", {"lot_id": lot.lotID})
+    response = client.post("/parking/leave/", {"lot_id": lot.lot_id})
     assert response.status_code == 401
 
 @pytest.mark.django_db
 def test_leave_full_lot_returns_400(auth_client, lot):
-    lot.availableSpaces = lot.totalSpaces
+    lot.available_spaces = lot.total_spaces
     lot.save()
-    response = auth_client.post("/parking/leave/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/leave/", {"lot_id": lot.lot_id})
     assert response.status_code == 400
 
 # ParkActionView Module Tests
@@ -164,7 +179,7 @@ def test_view_parking_map_requires_authentication(lot):
 
 @pytest.mark.django_db
 def test_request_park_returns_200(auth_client, lot):
-    response = auth_client.post("/parking/action/park/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/action/park/", {"lot_id": lot.lot_id})
     assert response.status_code == 200
 
 @pytest.mark.django_db
@@ -174,15 +189,15 @@ def test_request_park_fails_when_lot_not_found(auth_client):
 
 @pytest.mark.django_db
 def test_request_park_fails_when_lot_full(auth_client, lot):
-    lot.availableSpaces = 0
+    lot.available_spaces = 0
     lot.save()
-    response = auth_client.post("/parking/action/park/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/action/park/", {"lot_id": lot.lot_id})
     assert response.status_code == 400
 
 @pytest.mark.django_db
 def test_request_park_requires_authentication(lot):
     client = APIClient()
-    response = client.post("/parking/action/park/", {"lot_id": lot.lotID})
+    response = client.post("/parking/action/park/", {"lot_id": lot.lot_id})
     assert response.status_code == 401
 
 @pytest.mark.django_db
@@ -193,18 +208,18 @@ def test_request_park_missing_lot_id_returns_400(auth_client):
 @pytest.mark.django_db
 def test_request_leave_returns_200(auth_client, lot, user):
     # user must have an active parked record first
-    ParkingEvent.objects.create(
+    parking_event.objects.create(
         user=user,
         lot=lot,
-        eventType=ParkingEvent.PARKED
+        event_type=parking_event.PARKED
     )
-    response = auth_client.post("/parking/action/leave/", {"lot_id": lot.lotID})
+    response = auth_client.post("/parking/action/leave/", {"lot_id": lot.lot_id})
     assert response.status_code == 200
 
 @pytest.mark.django_db
 def test_request_leave_fails_without_active_record(auth_client, lot):
-    # no ParkingEvent created — should be rejected
-    response = auth_client.post("/parking/action/leave/", {"lot_id": lot.lotID})
+    # no parking_event created — should be rejected
+    response = auth_client.post("/parking/action/leave/", {"lot_id": lot.lot_id})
     assert response.status_code == 400
 
 @pytest.mark.django_db
@@ -215,7 +230,7 @@ def test_request_leave_fails_when_lot_not_found(auth_client):
 @pytest.mark.django_db
 def test_request_leave_requires_authentication(lot):
     client = APIClient()
-    response = client.post("/parking/action/leave/", {"lot_id": lot.lotID})
+    response = client.post("/parking/action/leave/", {"lot_id": lot.lot_id})
     assert response.status_code == 401
 
 @pytest.mark.django_db
@@ -286,7 +301,7 @@ def test_refresh_map_called_after_mark_parked(user, lot):
     # verify refresh_map() fires automatically after mark_parked()
     with patch('parking.services.refresh_map') as mock_refresh:
         from parking.services import mark_parked
-        mark_parked(user.userID, lot.lotID)
+        mark_parked(user.user_id, lot.lot_id)
         mock_refresh.assert_called_once()
 
 @pytest.mark.django_db
@@ -294,5 +309,6 @@ def test_refresh_map_called_after_mark_left(user, lot):
     # verify refresh_map() fires automatically after mark_left()
     with patch('parking.services.refresh_map') as mock_refresh:
         from parking.services import mark_left
-        mark_left(user.userID, lot.lotID)
+        mark_left(user.user_id, lot.lot_id)
         mock_refresh.assert_called_once()
+

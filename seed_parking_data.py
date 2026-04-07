@@ -39,18 +39,18 @@ DAYS_OF_HISTORY = 30
 # ─── PARKING LOTS ────────────────────────────────────────────────────────────
 
 LOTS = [
-    {"name": "Kelley Center",    "latitude": 41.160659, "longitude": -73.258419, "totalSpaces": 20,  "catalogID": 1},
-    {"name": "Jogues Lot",       "latitude": 41.161822, "longitude": -73.261176, "totalSpaces": 100, "catalogID": 1},
-    {"name": "Bowman Lot",       "latitude": 41.160318, "longitude": -73.261309, "totalSpaces": 50,  "catalogID": 1},
-    {"name": "Canisius Lot",     "latitude": 41.159295, "longitude": -73.259940, "totalSpaces": 100, "catalogID": 1},
-    {"name": "Bellarmine Lot",   "latitude": 41.157767, "longitude": -73.259656, "totalSpaces": 30,  "catalogID": 1},
-    {"name": "Barnyard Lot",     "latitude": 41.153995, "longitude": -73.257876, "totalSpaces": 55,  "catalogID": 1},
-    {"name": "Media Center Lot", "latitude": 41.153405, "longitude": -73.255982, "totalSpaces": 28,  "catalogID": 1},
-    {"name": "Faber Lot",        "latitude": 41.155460, "longitude": -73.254132, "totalSpaces": 59,  "catalogID": 1},
-    {"name": "Mahan Lot",        "latitude": 41.157496, "longitude": -73.253312, "totalSpaces": 22,  "catalogID": 1},
-    {"name": "Egan Lot",         "latitude": 41.159402, "longitude": -73.256080, "totalSpaces": 200, "catalogID": 1},
-    {"name": "Parking garage",   "latitude": 41.160861, "longitude": -73.257028, "totalSpaces": 200, "catalogID": 1},
-    {"name": "Mccorminck Lot",   "latitude": 41.161456, "longitude": -73.259210, "totalSpaces": 150, "catalogID": 1},
+    {"name": "Kelley Center",    "latitude": 41.160659, "longitude": -73.258419, "total_spaces": 20,  "catalog_id": 1},
+    {"name": "Jogues Lot",       "latitude": 41.161822, "longitude": -73.261176, "total_spaces": 100, "catalog_id": 1},
+    {"name": "Bowman Lot",       "latitude": 41.160318, "longitude": -73.261309, "total_spaces": 50,  "catalog_id": 1},
+    {"name": "Canisius Lot",     "latitude": 41.159295, "longitude": -73.259940, "total_spaces": 100, "catalog_id": 1},
+    {"name": "Bellarmine Lot",   "latitude": 41.157767, "longitude": -73.259656, "total_spaces": 30,  "catalog_id": 1},
+    {"name": "Barnyard Lot",     "latitude": 41.153995, "longitude": -73.257876, "total_spaces": 55,  "catalog_id": 1},
+    {"name": "Media Center Lot", "latitude": 41.153405, "longitude": -73.255982, "total_spaces": 28,  "catalog_id": 1},
+    {"name": "Faber Lot",        "latitude": 41.155460, "longitude": -73.254132, "total_spaces": 59,  "catalog_id": 1},
+    {"name": "Mahan Lot",        "latitude": 41.157496, "longitude": -73.253312, "total_spaces": 22,  "catalog_id": 1},
+    {"name": "Egan Lot",         "latitude": 41.159402, "longitude": -73.256080, "total_spaces": 200, "catalog_id": 1},
+    {"name": "Parking garage",   "latitude": 41.160861, "longitude": -73.257028, "total_spaces": 200, "catalog_id": 1},
+    {"name": "Mccorminck Lot",   "latitude": 41.161456, "longitude": -73.259210, "total_spaces": 150, "catalog_id": 1},
 ]
 
 # ─── REALISTIC OCCUPANCY CURVE ───────────────────────────────────────────────
@@ -158,12 +158,12 @@ def main():
             lot["name"],
             lot["latitude"],
             lot["longitude"],
-            lot["totalSpaces"],
-            lot["totalSpaces"],
-            lot["catalogID"],
+            lot["total_spaces"],
+            lot["total_spaces"],
+            lot["catalog_id"],
         ))
         lot_id = cur.fetchone()[0]
-        lot_ids.append((lot_id, lot["totalSpaces"]))
+        lot_ids.append((lot_id, lot["total_spaces"]))
         print(f"  -> Lot '{lot['name']}' inserted with ID {lot_id}")
 
     conn.commit()
@@ -201,7 +201,7 @@ def main():
         )
         conn.commit()
 
-        # ── 4. Update availableSpaces ─────────────────────────────────────────
+        # ── 4. Update available_spaces ─────────────────────────────────────────
         parked_count = sum(1 for _, _, etype, _ in events if etype == "PARKED")
         left_count   = sum(1 for _, _, etype, _ in events if etype == "LEFT")
         net_parked   = max(0, parked_count - left_count)
@@ -212,7 +212,7 @@ def main():
             (available, lot_id)
         )
         conn.commit()
-        print(f"  -> availableSpaces updated to {available}")
+        print(f"  -> available_spaces updated to {available}")
 
     print("\nSeed complete!")
     cur.close()
@@ -221,3 +221,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

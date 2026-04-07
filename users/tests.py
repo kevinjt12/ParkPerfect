@@ -1,7 +1,7 @@
 """
 users/tests.py
 
-Integration tests for the User Authentication and User Settings modules.
+Integration tests for the user Authentication and user Settings modules.
 
 Run with:
     python manage.py test users
@@ -10,15 +10,15 @@ Run with:
 from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
-from .models import User, Vehicle
+from .models import user, vehicle
 
 
 # ── Helpers ───────────────────────────────────────────────────
 
 def create_user(email='test@example.com', password='TestPass123!',
                 first='John', last='Doe'):
-    return User.objects.create_user(
-        email=email, password=password, firstName=first, lastName=last
+    return user.objects.create_user(
+        email=email, password=password, first_name=first, last_name=last
     )
 
 
@@ -31,9 +31,9 @@ def get_tokens(client, email, password):
     return response.data.get('access'), response.data.get('refresh')
 
 
-# ── User Login Flow ────────────────────────────────────
+# ── user Login Flow ────────────────────────────────────
 
-class UserLoginTests(TestCase):
+class user_login_tests(TestCase):
     """
     TC-04 — Valid credentials return JWT tokens.
              Invalid credentials return 401.
@@ -89,19 +89,19 @@ class UserLoginTests(TestCase):
 
     def test_register_creates_user_and_returns_tokens(self):
         response = self.client.post('/api/auth/register/', {
-            'firstName': 'Jane',
-            'lastName': 'Smith',
+            'first_name': 'Jane',
+            'last_name': 'Smith',
             'email': 'jane@example.com',
             'password': 'NewPass123!',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn('access', response.data)
-        self.assertTrue(User.objects.filter(email='jane@example.com').exists())
+        self.assertTrue(user.objects.filter(email='jane@example.com').exists())
 
 
-# ── Update User Settings ───────────────────────────────
+# ── Update user Settings ───────────────────────────────
 
-class UserSettingsTests(TestCase):
+class user_settings_tests(TestCase):
     """
     TC-05 — PATCH updates the correct DB record.
              verify_credentials() is called before password change.
@@ -116,21 +116,21 @@ class UserSettingsTests(TestCase):
 
     def test_change_name_updates_db(self):
         response = self.client.patch('/api/user/name/', {
-            'firstName': 'Johnny',
-            'lastName': 'Doe',
+            'first_name': 'Johnny',
+            'last_name': 'Doe',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.firstName, 'Johnny')
+        self.assertEqual(self.user.first_name, 'Johnny')
 
     def test_change_first_name_only(self):
         response = self.client.patch('/api/user/name/', {
-            'firstName': 'Jonathan',
+            'first_name': 'Jonathan',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
-        self.assertEqual(self.user.firstName, 'Jonathan')
-        self.assertEqual(self.user.lastName, 'Doe')
+        self.assertEqual(self.user.first_name, 'Jonathan')
+        self.assertEqual(self.user.last_name, 'Doe')
 
     def test_change_email_updates_db(self):
         response = self.client.patch('/api/user/email/', {
@@ -149,8 +149,8 @@ class UserSettingsTests(TestCase):
 
     def test_change_password_with_correct_current_password(self):
         response = self.client.patch('/api/user/password/', {
-            'currentPassword': 'TestPass123!',
-            'newPassword': 'NewSecure456!',
+            'current_password': 'TestPass123!',
+            'new_password': 'NewSecure456!',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.user.refresh_from_db()
@@ -158,8 +158,8 @@ class UserSettingsTests(TestCase):
 
     def test_change_password_wrong_current_password_returns_400(self):
         response = self.client.patch('/api/user/password/', {
-            'currentPassword': 'WrongPassword!',
-            'newPassword': 'NewSecure456!',
+            'current_password': 'WrongPassword!',
+            'new_password': 'NewSecure456!',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn('error', response.data)
@@ -168,30 +168,30 @@ class UserSettingsTests(TestCase):
 
     def test_change_password_too_short_returns_400(self):
         response = self.client.patch('/api/user/password/', {
-            'currentPassword': 'TestPass123!',
-            'newPassword': 'short',
+            'current_password': 'TestPass123!',
+            'new_password': 'short',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_change_plate_updates_db(self):
-        Vehicle.objects.create(
+        vehicle.objects.create(
             user=self.user,
-            licensePlateNumber='ABC123',
-            licensePlateState='CT',
+            license_plate_number='ABC123',
+            license_plate_state='CT',
         )
         response = self.client.patch('/api/user/plate/', {
-            'licensePlateNumber': 'XYZ789',
-            'licensePlateState': 'NY',
+            'license_plate_number': 'XYZ789',
+            'license_plate_state': 'NY',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        vehicle = Vehicle.objects.get(user=self.user)
-        self.assertEqual(vehicle.licensePlateNumber, 'XYZ789')
-        self.assertEqual(vehicle.licensePlateState, 'NY')
+        vehicle_record = vehicle.objects.get(user=self.user)
+        self.assertEqual(vehicle_record.license_plate_number, 'XYZ789')
+        self.assertEqual(vehicle_record.license_plate_state, 'NY')
 
     def test_change_plate_no_vehicle_returns_404(self):
         response = self.client.patch('/api/user/plate/', {
-            'licensePlateNumber': 'XYZ789',
-            'licensePlateState': 'NY',
+            'license_plate_number': 'XYZ789',
+            'license_plate_state': 'NY',
         }, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
@@ -201,3 +201,4 @@ class UserSettingsTests(TestCase):
             response = unauthenticated.patch(url, {}, format='json')
             self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED,
                              msg=f'{url} should require authentication')
+
