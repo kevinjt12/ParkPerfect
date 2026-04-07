@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import api from '../api';
 import { use_auth } from '../Auth_Context';
-
+// gets error messages from API
 function get_error_message(error, fallback_message) {
   const response_data = error.response?.data;
 
@@ -24,10 +24,11 @@ function get_error_message(error, fallback_message) {
 
   return fallback_message;
 }
-
+// Main settings page component. Allows users to update their name, email, password, and vehicle information. Handles form state, validation, API calls, and displays success/error messages.
 export default function settings_page() {
   const { logout, update_user, user } = use_auth();
   const navigate = useNavigate();
+  // local form state used to control all inputs on the page.
   const [form_state, set_form_state] = useState({
     current_password: '',
     email: '',
@@ -37,10 +38,11 @@ export default function settings_page() {
     plate_number: '',
     plate_state: '',
   });
+  //UI feedback for error/success messages and loading state for when the form is being submitted.
   const [error_message, set_error_message] = useState('');
   const [is_saving, set_is_saving] = useState(false);
   const [success_message, set_success_message] = useState('');
-
+// populate the form when the authenticated user changes. Pulls the first registered vehicle to user
   useEffect(() => {
     const vehicle = user?.vehicles?.[0];
 
@@ -53,7 +55,7 @@ export default function settings_page() {
       plate_state: vehicle?.license_plate_state ?? '',
     }));
   }, [user]);
-
+// input handler for all form fields.
   const handle_change = (event) => {
     const { name, value } = event.target;
 
@@ -62,32 +64,34 @@ export default function settings_page() {
       [name]: value,
     }));
   };
-
+// logs the user out
   const handle_logout = async () => {
     await logout();
     navigate('/login', { replace: true });
   };
-
+// handles form submission. Validates input, makes API calls to update user information, and provides feedback on the success or failure of the updates.
   const handle_submit = async (event) => {
     event.preventDefault();
     set_error_message('');
     set_success_message('');
     set_is_saving(true);
-
+//normalize user input before sending to backend
     const trimmed_first_name = form_state.first_name.trim();
     const trimmed_last_name = form_state.last_name.trim();
     const trimmed_email = form_state.email.trim();
     const trimmed_plate_number = form_state.plate_number.trim().toUpperCase();
     const trimmed_plate_state = form_state.plate_state.trim().toUpperCase();
+    //tracks which sections are succesfully updated.
     const updates = [];
+    //local copy of current user so frontend authentication state can be refreshed after.
     const next_user = user ? { ...user } : null;
-
+    // basic validation of name fields.
     if (!trimmed_first_name || !trimmed_last_name) {
       set_error_message('First and last name are required.');
       set_is_saving(false);
       return;
     }
-
+    // basic validation for password updates. Requires both current and new password to be entered to proceed with update.
     if ((form_state.new_password && !form_state.current_password) || (!form_state.new_password && form_state.current_password)) {
       set_error_message('Enter both current and new passwords to update your password.');
       set_is_saving(false);
@@ -95,6 +99,7 @@ export default function settings_page() {
     }
 
     try {
+      //update name only if it changed
       if (trimmed_first_name !== user?.first_name || trimmed_last_name !== user?.last_name) {
         const response = await api.patch('/user/name/', {
           first_name: trimmed_first_name,
@@ -108,6 +113,7 @@ export default function settings_page() {
 
         updates.push('Name saved');
       }
+      // update email only if it changed
 
       if (trimmed_email !== user?.email) {
         const response = await api.patch('/user/email/', { email: trimmed_email });
@@ -118,7 +124,7 @@ export default function settings_page() {
 
         updates.push('Email saved');
       }
-
+      //update passwor donly when a new password was entered
       if (form_state.new_password) {
         await api.patch('/user/password/', {
           current_password: form_state.current_password,
@@ -127,12 +133,12 @@ export default function settings_page() {
 
         updates.push('Password saved');
       }
-
+      //compare current vehicle plate infor to dtect changes. Uses first vehicle on the user profile
       const existing_vehicle = user?.vehicles?.[0];
       const plate_changed =
         trimmed_plate_number !== (existing_vehicle?.license_plate_number ?? '') ||
         trimmed_plate_state !== (existing_vehicle?.license_plate_state ?? '');
-
+      // update plate info only if it changed. 
       if (plate_changed) {
         const response = await api.patch('/user/plate/', {
           license_plate_number: trimmed_plate_number,
@@ -153,7 +159,7 @@ export default function settings_page() {
 
         updates.push('Plate saved');
       }
-
+      // if nothing changed. tell user.
       if (!updates.length) {
         set_success_message('No changes were needed.');
       } else {
@@ -163,7 +169,7 @@ export default function settings_page() {
 
         set_success_message(updates.join(' | '));
       }
-
+// clear password fields after submission for security.
       set_form_state((current_state) => ({
         ...current_state,
         current_password: '',
@@ -196,7 +202,7 @@ export default function settings_page() {
             </button>
           </div>
         </header>
-
+ {/* Profile information section */}
         <form className="settings-form" onSubmit={handle_submit}>
           <section className="settings-group">
             <div className="settings-group__header">
@@ -221,6 +227,7 @@ export default function settings_page() {
               </label>
             </div>
           </section>
+          {/* Password update section */}
 
           <section className="settings-group">
             <div className="settings-group__header">
@@ -252,6 +259,7 @@ export default function settings_page() {
               </label>
             </div>
           </section>
+          {/* Vehicle registration section */}
 
           <section className="settings-group">
             <div className="settings-group__header">
@@ -285,9 +293,11 @@ export default function settings_page() {
               </label>
             </div>
           </section>
+          {/* Feedback messages for save operations */}
 
           {error_message ? <p className="form-message form-message--error">{error_message}</p> : null}
           {success_message ? <p className="form-message form-message--success">{success_message}</p> : null}
+          {/* Submit button shows loading state while save requests are in progress */}
 
           <button className="primary-button" disabled={is_saving} type="submit">
             {is_saving ? 'Saving...' : 'Save settings'}

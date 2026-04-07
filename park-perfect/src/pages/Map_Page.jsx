@@ -20,7 +20,7 @@ import 'leaflet/dist/leaflet.css';
 
 const DEFAULT_CENTER = [40.7982, -77.8599];
 const WS_URL = 'ws://localhost:8000/ws/map/';
-
+// extracts readable error messages from API
 function get_api_error(error, fallback_message) {
   const response_data = error.response?.data;
 
@@ -46,12 +46,12 @@ function get_api_error(error, fallback_message) {
 
   return fallback_message;
 }
-
+// converts value to number. Used for total spaces as a safeguard, and especially used for lat and long of lots. 
 function to_number(value, fallback = 0) {
   const parsed_value = Number(value);
   return Number.isFinite(parsed_value) ? parsed_value : fallback;
 }
-
+// normalizes a parking lot object from backend to be used for the map. 
 function normalize_lot(lot, index) {
   const total_spaces = to_number(lot.total_spaces ?? lot.total_spaces, 0);
   const available_spaces = to_number(lot.available_spaces ?? lot.available_spaces, 0);
@@ -70,7 +70,7 @@ function normalize_lot(lot, index) {
     total_spaces,
   };
 }
-
+//normalizes and sorts parking lots for the UI
 function normalize_lots(payload) {
   if (!Array.isArray(payload)) {
     return [];
@@ -80,7 +80,7 @@ function normalize_lots(payload) {
     first_lot.name.localeCompare(second_lot.name)
   );
 }
-
+//Determines the UI styling based on lot availability
 function get_availability_tone(lot) {
   const ratio = lot.total_spaces > 0 ? lot.available_spaces / lot.total_spaces : 0;
 
@@ -106,7 +106,7 @@ function get_availability_tone(lot) {
     marker: '#2bd06c',
   };
 }
-
+// Creates lot markers on the map. 
 function create_lot_marker(lot) {
   const tone = get_availability_tone(lot);
 
@@ -121,11 +121,11 @@ function create_lot_marker(lot) {
     iconAnchor: [19, 19],
   });
 }
-
+// adjust map bounds dynamially to encompass the lots. 
 function map_bounds_controller({ lots }) {
   const map = useMap();
   const previous_signature_ref = useRef('');
-
+//WebSocket connection for real-time updates. Includes automatic reconnection. 
   useEffect(() => {
     if (!lots.length) {
       map.setView(DEFAULT_CENTER, 15);
@@ -159,7 +159,7 @@ function map_bounds_controller({ lots }) {
 }
 
 const Map_Bounds_Controller = map_bounds_controller;
-
+//Moves map to a user requested location.
 function requested_center_controller({ request }) {
   const map = useMap();
 
@@ -175,12 +175,18 @@ function requested_center_controller({ request }) {
 }
 
 const Requested_Center_Controller = requested_center_controller;
-
+// gets parking lot data from the backend API.
 async function fetch_lots_from_api() {
   const response = await api.get('/parking/map/');
   return normalize_lots(response.data);
 }
-
+/**
+ * 
+ * Main map page component.
+ * Handles real time updates using web socket
+ * Handles user interactions for parking, leaving, subscribing to notifications, and using live location.
+ * Displays parking lots on a map and in a list with availability and actions.
+ */
 export default function map_page() {
   const { current_parking_lot_id, logout, set_current_parking_lot_id, user } = use_auth();
   const navigate = useNavigate();
@@ -313,7 +319,7 @@ export default function map_page() {
       [key]: isPending,
     }));
   };
-
+ // Handles user actions for parking and leaving lots, with validation and API calls. Also triggers a refresh of parking lot data after the action is completed.
   const handle_parking_action = async (lot_id, action) => {
     if (action === 'park' && current_parking_lot_id && current_parking_lot_id !== lot_id) {
       set_page_notice('Leave your current lot before parking somewhere else.');
@@ -343,6 +349,7 @@ export default function map_page() {
         set_current_parking_lot_id(null);
         set_page_notice('Departure recorded.');
       }
+      // loads parking lots from API
       await load_lots_ref.current(false);
     } catch (error) {
       set_page_notice(
@@ -355,7 +362,7 @@ export default function map_page() {
       set_action_pending(action_key, false);
     }
   };
-
+// Handles user subscribing to notifications for a specific parking lot
   const handle_subscribe = async (lot_id, lot_name) => {
     const action_key = `subscribe-${lot_id}`;
     set_action_pending(action_key, true);
@@ -378,7 +385,7 @@ export default function map_page() {
       set_action_pending(action_key, false);
     }
   };
-
+// Handles user clicking the "Find Me" button to use live location. Requests geolocation permission and updates the map center if granted.
   const handle_use_my_location = () => {
     if (!navigator.geolocation) {
       set_page_notice('This browser does not support live location.');
@@ -398,7 +405,7 @@ export default function map_page() {
       { enableHighAccuracy: true, timeout: 10000 }
     );
   };
-
+//logs the user out.
   const handle_logout = async () => {
     await logout();
     navigate('/login', { replace: true });

@@ -1,5 +1,4 @@
 let socket = null;
-
 export const connect_socket = (on_message) => {
     socket = new WebSocket('ws://localhost:8000/ws/map/');
 
