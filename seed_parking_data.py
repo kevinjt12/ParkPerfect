@@ -2,6 +2,8 @@
 seed_parking_data.py
 
 Generates realistic fake parking data and inserts it into PostgreSQL.
+This script resets local parking lots and parking events before reseeding,
+so it can be safely rerun for a fresh 30-day local dataset.
 
 Usage:
     pip install psycopg2-binary faker
@@ -12,21 +14,24 @@ Run seed_users.py first to populate users.
 """
 
 import random
+import os
 import psycopg2
 import psycopg2.extras
 from datetime import datetime, timedelta
 from faker import Faker
+from dotenv import load_dotenv
 
 fake = Faker()
+load_dotenv()
 
 # ─── CONFIG ──────────────────────────────────────────────────────────────────
 
 DB_CONFIG = {
-    "dbname":   "Parkperfect",
-    "user":     "postgres",
-    "password": "Steelersfan22#",
-    "host":     "localhost",
-    "port":     5432,
+    "dbname":   os.getenv("DB_NAME", "ParkPerfect"),
+    "user":     os.getenv("DB_USER", "postgres"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "host":     os.getenv("DB_HOST", "localhost"),
+    "port":     int(os.getenv("DB_PORT", "5432")),
 }
 # How many days of history to generate
 DAYS_OF_HISTORY = 30
@@ -34,10 +39,18 @@ DAYS_OF_HISTORY = 30
 # ─── PARKING LOTS ────────────────────────────────────────────────────────────
 
 LOTS = [
-    {"name": "Main Street Garage",    "latitude": 41.141300, "longitude": -73.263100, "totalSpaces": 120, "catalogID": 1},
-    {"name": "Riverside Surface Lot", "latitude": 41.139800, "longitude": -73.261500, "totalSpaces": 60,  "catalogID": 1},
-    {"name": "Downtown Parking Deck", "latitude": 41.142500, "longitude": -73.264200, "totalSpaces": 200, "catalogID": 2},
-    {"name": "Harbor View Lot",       "latitude": 41.138900, "longitude": -73.260800, "totalSpaces": 80,  "catalogID": 2},
+    {"name": "Kelley Center",    "latitude": 41.160659, "longitude": -73.258419, "totalSpaces": 20,  "catalogID": 1},
+    {"name": "Jogues Lot",       "latitude": 41.161822, "longitude": -73.261176, "totalSpaces": 100, "catalogID": 1},
+    {"name": "Bowman Lot",       "latitude": 41.160318, "longitude": -73.261309, "totalSpaces": 50,  "catalogID": 1},
+    {"name": "Canisius Lot",     "latitude": 41.159295, "longitude": -73.259940, "totalSpaces": 100, "catalogID": 1},
+    {"name": "Bellarmine Lot",   "latitude": 41.157767, "longitude": -73.259656, "totalSpaces": 30,  "catalogID": 1},
+    {"name": "Barnyard Lot",     "latitude": 41.153995, "longitude": -73.257876, "totalSpaces": 55,  "catalogID": 1},
+    {"name": "Media Center Lot", "latitude": 41.153405, "longitude": -73.255982, "totalSpaces": 28,  "catalogID": 1},
+    {"name": "Faber Lot",        "latitude": 41.155460, "longitude": -73.254132, "totalSpaces": 59,  "catalogID": 1},
+    {"name": "Mahan Lot",        "latitude": 41.157496, "longitude": -73.253312, "totalSpaces": 22,  "catalogID": 1},
+    {"name": "Egan Lot",         "latitude": 41.159402, "longitude": -73.256080, "totalSpaces": 200, "catalogID": 1},
+    {"name": "Parking garage",   "latitude": 41.160861, "longitude": -73.257028, "totalSpaces": 200, "catalogID": 1},
+    {"name": "Mccorminck Lot",   "latitude": 41.161456, "longitude": -73.259210, "totalSpaces": 150, "catalogID": 1},
 ]
 
 # ─── REALISTIC OCCUPANCY CURVE ───────────────────────────────────────────────
@@ -128,6 +141,11 @@ def main():
     print("Connected to PostgreSQL.")
 
     # ── 1. Insert parking lots ────────────────────────────────────────────────
+    print("Clearing existing parking events and lots...")
+    cur.execute('DELETE FROM parking_parkingevent')
+    cur.execute('DELETE FROM parking_parkinglot')
+    conn.commit()
+
     print("Inserting parking lots...")
     lot_ids = []
     for lot in LOTS:

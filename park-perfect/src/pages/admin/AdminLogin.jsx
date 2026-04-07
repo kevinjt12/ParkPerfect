@@ -59,28 +59,39 @@ const styles = {
   logoRow: {
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
-    marginBottom: '28px',
+    justifyContent: 'flex-start',
+    gap: '14px',
+    marginBottom: '24px',
   },
 
   logo: {
-    width: '44px',
-    height: '44px',
+    width: '88px',
+    height: '88px',
     objectFit: 'contain',
   },
 
-  logoText: {
-    fontSize: '20px',
-    fontWeight: '800',
-    letterSpacing: '-0.5px',
-    lineHeight: 1,
+  brandCopy: {
+    display: 'grid',
+    gap: '4px',
   },
 
-  // "Park" in brand red
-  logoRed: { color: '#D72B2B' },
+  eyebrow: {
+    margin: 0,
+    color: '#ff7a7a',
+    textTransform: 'uppercase',
+    letterSpacing: '0.16em',
+    fontSize: '0.68rem',
+    fontWeight: '700',
+  },
 
-  // "Perfect" in off-white
-  logoWhite: { color: '#f1f1f1' },
+  logoText: {
+    margin: 0,
+    color: '#f8f7f4',
+    fontFamily: "'Space Grotesk', sans-serif",
+    fontSize: 'clamp(1.8rem, 4vw, 2.3rem)',
+    fontWeight: '700',
+    lineHeight: 1.05,
+  },
 
   // Gold crown badge — mirrors the logo crown colour
   badge: {
@@ -218,7 +229,7 @@ export default function AdminLogin() {
     setError('');
 
     try {
-      const response = await client.post('admin/login/', { email, password });
+      const response = await client.post('panel/login/', { email, password });
 
       // Persist JWT tokens so authenticated API calls include them
       localStorage.setItem('access', response.data.access);
@@ -271,10 +282,10 @@ export default function AdminLogin() {
 
           {/* Logo + brand name */}
           <div style={styles.logoRow}>
-            <img src="/Park Perfect Logo.png" alt="ParkPerfect" style={styles.logo} />
-            <div style={styles.logoText}>
-              <span style={styles.logoRed}>Park</span>
-              <span style={styles.logoWhite}>Perfect</span>
+            <img src="/Park Perfect Logo.png" alt="Park Perfect" style={styles.logo} />
+            <div style={styles.brandCopy}>
+              <p style={styles.eyebrow}>Fairfield University</p>
+              <h1 style={styles.logoText}>ParkPerfect</h1>
             </div>
           </div>
 

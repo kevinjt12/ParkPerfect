@@ -17,10 +17,14 @@ client.interceptors.request.use((config) => {
 client.interceptors.response.use(
     (response) => response,
     (error) => {
-        if (error.response?.status === 401) {
+        const requestUrl = error.config?.url ?? '';
+        const isLoginRequest = requestUrl.includes('login/');
+        const isAdminRequest = requestUrl.includes('admin/') || requestUrl.includes('panel/');
+
+        if (error.response?.status === 401 && !isLoginRequest) {
             localStorage.removeItem('access');
             localStorage.removeItem('refresh');
-            window.location.href = '/login';
+            window.location.href = isAdminRequest ? '/admin/login' : '/login';
         }
         return Promise.reject(error);
     }
