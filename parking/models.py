@@ -33,3 +33,11 @@ class parking_event(models.Model):
     class Meta:
         db_table = 'parking_parkingevent'
 
+class notification_subscription(models.Model):
+    user = models.ForeignKey(user, on_delete=models.CASCADE)
+    lot = models.ForeignKey(parking_lot, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'lot')
+

@@ -6,7 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .services import get_lots, get_available_spaces, mark_parked, mark_left
 from .serializers import parking_lot_serializer
-from .models import parking_lot, parking_event
+from .models import parking_lot, parking_event, notification_subscription
 
 class parking_lots_view(APIView):
     #is Authenicated ensure that the user logged in
@@ -85,3 +85,27 @@ class parking_action_view(APIView):
         serializer = parking_lot_serializer(lots, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+class notification_subscription_view(APIView):
+    #is Authenicated ensure that the user logged in
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        lot_id = request.query_params.get('lot_id')
+
+        if not lot_id:
+            return Response({'error': 'lot_id is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            lot = parking_lot.objects.get(pk=lot_id)
+        except parking_lot.DoesNotExist:
+            return Response({'error': 'Lot not found.'}, status=status.HTTP_404_NOT_FOUND)
+        
+        subscription, created = notification_subscription.objects.get_or_create(
+            user=request.user,
+            lot=lot
+        )
+
+        if created:
+            return Response({'status': 'Subscribed successfully.'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'status': 'Already subscribed.'}, status=status.HTTP_200_OK)

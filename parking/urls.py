@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import parking_lots_view, parking_event_view, parking_action_view
+from .views import parking_lots_view, parking_event_view, parking_action_view, notification_subscription_view
 
 urlpatterns = [
     #Parking Data URL Paths
@@ -12,6 +12,7 @@ urlpatterns = [
     #Parking Action URL Paths
     path('parking/map/', parking_action_view.as_view(), name='parking-map'),
     path('parking/action/park/', parking_action_view.as_view(), {'action': 'park'}, name='park-action-park'),
-    path('parking/action/leave/', parking_action_view.as_view(), {'action': 'leave'}, name='park-action-leave')
+    path('parking/action/leave/', parking_action_view.as_view(), {'action': 'leave'}, name='park-action-leave'),
+    path('notifications/subscribe/', notification_subscription_view.as_view(), name='notifications-subscribe')
 ]
 

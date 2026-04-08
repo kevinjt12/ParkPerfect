@@ -312,3 +312,83 @@ def test_refresh_map_called_after_mark_left(user, lot):
         mark_left(user.user_id, lot.lot_id)
         mock_refresh.assert_called_once()
 
+# ─── 4.4 Notification Subscription Tests ─────────────────────
+from parking.models import notification_subscription
+
+# --- POST /notifications/subscribe/ ---
+
+@pytest.mark.django_db
+def test_subscribe_returns_201(auth_client, lot):
+    response = auth_client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    assert response.status_code == 201
+
+@pytest.mark.django_db
+def test_subscribe_creates_subscription_in_db(auth_client, lot, user):
+    auth_client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    assert notification_subscription.objects.filter(user=user, lot=lot).exists()
+
+@pytest.mark.django_db
+def test_subscribe_twice_returns_200(auth_client, lot):
+    auth_client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    response = auth_client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    assert response.status_code == 200
+
+@pytest.mark.django_db
+def test_subscribe_twice_does_not_duplicate(auth_client, lot, user):
+    auth_client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    auth_client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    count = notification_subscription.objects.filter(user=user, lot=lot).count()
+    assert count == 1
+
+@pytest.mark.django_db
+def test_subscribe_requires_authentication(lot):
+    client = APIClient()
+    response = client.post(f"/notifications/subscribe/?lot_id={lot.lot_id}")
+    assert response.status_code == 401
+
+@pytest.mark.django_db
+def test_subscribe_missing_lot_id_returns_400(auth_client):
+    response = auth_client.post("/notifications/subscribe/")
+    assert response.status_code == 400
+
+@pytest.mark.django_db
+def test_subscribe_invalid_lot_returns_404(auth_client):
+    response = auth_client.post("/notifications/subscribe/?lot_id=99999")
+    assert response.status_code == 404
+
+@pytest.mark.django_db
+def test_notification_sent_when_lot_transitions_from_full(user, lot):
+    notification_subscription.objects.create(user=user, lot=lot)
+    lot.available_spaces = 0
+    lot.save()
+
+    with patch('parking.services.send_availability_notification') as mock_notify:
+        with patch('parking.services.refresh_map'):
+            from parking.services import mark_left
+            mark_left(user.userID, lot.lot_id)
+            mock_notify.assert_called_once()
+
+@pytest.mark.django_db
+def test_notification_not_sent_when_lot_not_full(user, lot):
+    notification_subscription.objects.create(user=user, lot=lot)
+    lot.available_spaces = 3
+    lot.save()
+
+    with patch('parking.services.send_availability_notification') as mock_notify:
+        with patch('parking.services.refresh_map'):
+            from parking.services import mark_left
+            mark_left(user.userID, lot.lot_id)
+            mock_notify.assert_not_called()
+
+@pytest.mark.django_db
+def test_notification_only_sent_to_subscribed_users(user, lot):
+    lot.available_spaces = 0
+    lot.save()
+
+    with patch('parking.services.async_to_sync') as mock_async_to_sync:
+        mock_send = MagicMock()
+        mock_async_to_sync.return_value = mock_send
+        with patch('parking.services.refresh_map'):
+            from parking.services import mark_left
+            mark_left(user.userID, lot.lot_id)
+            mock_send.assert_not_called()

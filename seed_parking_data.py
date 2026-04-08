@@ -29,9 +29,9 @@ load_dotenv()
 DB_CONFIG = {
     "dbname":   os.getenv("DB_NAME", "ParkPerfect"),
     "user":     os.getenv("DB_USER", "postgres"),
-    "password": os.getenv("DB_PASSWORD", ""),
+    "password": os.getenv("DB_PASSWORD", "Fairfieldcom25!"),
     "host":     os.getenv("DB_HOST", "localhost"),
-    "port":     int(os.getenv("DB_PORT", "5432")),
+    "port":     int(os.getenv("DB_PORT", "5433")),
 }
 # How many days of history to generate
 DAYS_OF_HISTORY = 30

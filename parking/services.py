@@ -37,7 +37,29 @@ def refresh_map():
     )
 
 
-# ------------ parking_lot Event Module Services ------------
+# ------------ Parking Notification Module Services ------------
+def send_availability_notification(lot):
+    #sends a notification to all users subscribed to a lot when availability is no longer full
+    from .models import notification_subscription
+    subscriptions = notification_subscription.objects.filter(lot=lot)
+
+    channel_layer = get_channel_layer()
+
+    for subscription in subscriptions:
+        async_to_sync(channel_layer.group_send)(
+            f'user_{subscription.user.userID}',
+            {
+                'type': 'availability_notification',
+                'data': {
+                    'lot_id': lot.lotID,
+                    'lot_name': lot.name,
+                    'available_spaces': lot.availableSpaces,
+                    'message': f'{lot.name} now has available spaces!'
+                }
+            }
+        )
+
+# ------------ Parking Lot Event Module Services ------------
 @transaction.atomic
 def mark_parked(user_id, lot_id):
     #marks the user as parked in a lot.
@@ -63,6 +85,8 @@ def mark_left(user_id, lot_id):
     if lot.available_spaces >= lot.total_spaces:
         raise ValueError('Available spaces cannot exceed total spaces.')
     
+    was_full = lot.availableSpaces == 0
+    
     parking_event.objects.create(
         user_id=user_id,
         lot=lot,
@@ -71,5 +95,8 @@ def mark_left(user_id, lot_id):
     lot.available_spaces += 1
     lot.save()
     refresh_map()
+
+    if was_full:
+        send_availability_notification(lot)
 
 
