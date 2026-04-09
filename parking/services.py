@@ -53,7 +53,7 @@ def send_availability_notification(lot):
                 'data': {
                     'lot_id': lot.lotID,
                     'lot_name': lot.name,
-                    'available_spaces': lot.availableSpaces,
+                    'available_spaces': lot.available_spaces,
                     'message': f'{lot.name} now has available spaces!'
                 }
             }
@@ -85,7 +85,7 @@ def mark_left(user_id, lot_id):
     if lot.available_spaces >= lot.total_spaces:
         raise ValueError('Available spaces cannot exceed total spaces.')
     
-    was_full = lot.availableSpaces == 0
+    was_full = lot.available_spaces == 0
     
     parking_event.objects.create(
         user_id=user_id,

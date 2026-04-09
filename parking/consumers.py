@@ -20,7 +20,14 @@ class parking_map_consumer(AsyncWebsocketConsumer):
             )
 
         await self.accept()
-        await self.send_lot_data()
+
+        from asgiref.sync import sync_to_async
+        lots = await sync_to_async(list)(parking_lot.objects.all())
+        serializer = parking_lot_serializer(lots, many=True)
+        await self.send(text_data=json.dumps({
+            'type': 'lot_update',
+            'lots': serializer.data
+        }))
 
     async def disconnect(self, close_code):
         # Leave the map group
@@ -38,16 +45,6 @@ class parking_map_consumer(AsyncWebsocketConsumer):
     async def receive(self, text_data):
         # Handle messages from the frontend if needed
         pass
-
-    async def send_lot_data(self, event):
-        # send parking lot data to client
-        from asgiref.sync import sync_to_async
-        lots = await sync_to_async(list)(parking_lot.objects.all())
-        serializer = parking_lot_serializer(lots, many=True)
-        await self.send(text_data=json.dumps({
-            'type': 'lot_update',
-            'lots': serializer.data
-        }))
 
     async def parking_update(self, event):
         # Send update to the frontend
