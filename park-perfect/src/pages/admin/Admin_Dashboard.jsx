@@ -11,6 +11,7 @@ import {
   Legend,
 } from "chart.js";
 import { Line, Bar } from "react-chartjs-2";
+import { useNavigate } from "react-router-dom";
 import client from "../../api/client";
 
 ChartJS.register(
@@ -303,6 +304,7 @@ const Bar_Comparison = bar_comparison;
 
 export default function admin_dashboard() {
   // Date range state — sent as query params to GET api/admin/statistics/
+  const navigate = useNavigate();
   const today = new Date().toISOString().split("T")[0];
   const [start_date, set_start_date] = useState(today);
   const [end_date,   set_end_date]   = useState(today);
@@ -400,23 +402,45 @@ export default function admin_dashboard() {
             </div>
           </div>
 
-          {/* Date range filter — changing these triggers a new API call via useEffect */}
-          <div style={{
-            display: "flex", alignItems: "center", gap: 8,
-            background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 10, padding: "8px 14px", fontSize: 14,
-          }}>
-            <input
-              type="date" value={start_date}
-              onChange={(e) => set_start_date(e.target.value)}
-              style={{ border: "none", outline: "none", fontSize: 14, color: "#aaa", background: "transparent" }}
-            />
-            <span style={{ color: "#D72B2B", fontWeight: 700 }}>→</span>
-            <input
-              type="date" value={end_date}
-              onChange={(e) => set_end_date(e.target.value)}
-              style={{ border: "none", outline: "none", fontSize: 14, color: "#aaa", background: "transparent" }}
-            />
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
+
+            <button
+              onClick={() => navigate("/admin/reports")}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(215,43,43,0.4)",
+                color: "#D72B2B",
+                borderRadius: 10,
+                padding: "8px 16px",
+                fontSize: 14,
+                fontWeight: 700,
+                cursor: "pointer",
+                letterSpacing: "0.03em",
+              }}
+              onMouseEnter={(e) => { e.target.style.background = "rgba(215,43,43,0.1)"; }}
+              onMouseLeave={(e) => { e.target.style.background = "transparent"; }}
+            >
+              Reports →
+            </button>
+
+            <div style={{
+              display: "flex", alignItems: "center", gap: 8,
+              background: "#1a1a1a", border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 10, padding: "8px 14px", fontSize: 14,
+            }}>
+              <input
+                type="date" value={start_date}
+                onChange={(e) => set_start_date(e.target.value)}
+                style={{ border: "none", outline: "none", fontSize: 14, color: "#aaa", background: "transparent" }}
+              />
+              <span style={{ color: "#D72B2B", fontWeight: 700 }}>→</span>
+              <input
+                type="date" value={end_date}
+                onChange={(e) => set_end_date(e.target.value)}
+                style={{ border: "none", outline: "none", fontSize: 14, color: "#aaa", background: "transparent" }}
+              />
+            </div>
+
           </div>
         </div>
 

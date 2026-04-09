@@ -78,7 +78,15 @@ class admin_logout(admin_auth_view):
 
 
 # ====================== REPORTING VIEWS ======================
+class report_list_view(APIView):
+    """GET /api/reports/"""
+    permission_classes = [IsAdminUser]
+    authentication_classes = [JWTAuthentication]
 
+    def get(self, request):
+        reports = statistics_report.objects.all().order_by('-generated_at')
+        serializer = statistics_report_serializer(reports, many=True)
+        return Response(serializer.data)
 class generate_report_view(APIView):
     """POST /api/admin/reports/generate/"""
     #generates a report for the given date range and saves it to the database. Returns the report ID and date range for reference
