@@ -58,11 +58,12 @@ export default function AdminReports() {
     try {
       const response = await client.get(`reports/${id}/export/`, {
         responseType: "blob",
+        //params: {format: "csv"},
       });
       const url = window.URL.createObjectURL(new Blob([response.data]));
       const link = document.createElement("a");
       link.href = url;
-      link.setAttribute("download", `report_${id}.csv`);
+      link.setAttribute("download", `report_${id}.pdf`); // or .csv based on your backend
       document.body.appendChild(link);
       link.click();
       link.remove();
