@@ -47,6 +47,9 @@ class statistics_view(admin_auth_view):
     
 class admin_login(APIView):
     #This is the same methodology as the user login, but just checks if_staff is true instead of just if the user exists
+
+    authentication_classes = []
+    permission_classes = [AllowAny]
     def post(self, request):
         email = request.data.get('email')
         password = request.data.get('password')

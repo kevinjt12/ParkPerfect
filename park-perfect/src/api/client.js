@@ -21,10 +21,12 @@ client.interceptors.response.use(
         const is_login_request = request_url.includes('login/');
         const is_admin_request = request_url.includes('admin/') || request_url.includes('panel/');
 
-        if (error.response?.status === 401 && !is_login_request) {
+        if (error.response?.status === 401) {
             localStorage.removeItem('access');
             localStorage.removeItem('refresh');
-            window.location.href = is_admin_request ? '/admin/login' : '/login';
+            if (!is_login_request) {
+                window.location.href = is_admin_request ? '/admin/login' : '/login';
+            }
         }
         return Promise.reject(error);
     }
