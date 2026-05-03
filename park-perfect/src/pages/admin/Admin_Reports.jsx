@@ -289,21 +289,14 @@ export default function AdminReports() {
                       {report.created_at ? new Date(report.created_at).toLocaleDateString() : "—"}
                     </td>
                     <td style={s.td}>
-                      <button
-                        style={s.view_btn}
-                        onClick={() => navigate(`/admin/reports/${report.report_id}`)}
-                        onMouseEnter={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.3)"; e.target.style.color = "#f1f1f1"; }}
-                        onMouseLeave={(e) => { e.target.style.borderColor = "rgba(255,255,255,0.1)"; e.target.style.color = "#888"; }}
-                      >
-                        View
-                      </button>
+                     
                       <button
                         style={s.export_btn}
                         onClick={() => handle_export(report.report_id)}
                         onMouseEnter={(e) => { e.target.style.background = "rgba(215,43,43,0.1)"; }}
                         onMouseLeave={(e) => { e.target.style.background = "transparent"; }}
                       >
-                        Export CSV
+                        Export PDF
                       </button>
                     </td>
                   </tr>
