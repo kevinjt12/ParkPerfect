@@ -43,7 +43,7 @@ export default function AdminReports() {
     set_error("");
     set_success("");
     try {
-      await client.post("reports/generate/", { start_date, end_date });
+      await client.post("reports/generate/", { start: start_date, end: end_date });
       set_success("Report generated successfully.");
       fetch_reports();
     } catch {

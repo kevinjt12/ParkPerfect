@@ -85,21 +85,31 @@ def calculate_occupancy_trend(lot, start_date, end_date):
     return result
 
 
-def calculate_statistics(lots, start_date, end_date):
+def calculate_statistics(lots, start_date, end_date, live_occupancy=False):
     #Aggregates statistics for all provided lots over a date range.
     results = []
     if not lots:
         return results
     for lot in lots:
+
+        trend = calculate_occupancy_trend(lot, start_date, end_date)
+
+        if live_occupancy: 
+            occupancy_rate = calculate_occupancy_rate(lot)
+        elif lot.total_spaces > 0 and trend:
+            avg_available = sum(e['avg_available_spaces'] for e in trend) / len(trend)
+            occupancy_rate = (lot.total_spaces - avg_available) / lot.total_spaces * 100
+        else:
+            occupancy_rate = 0.0
         results.append({
             'lot_id': lot.lot_id,
             'name': lot.name,
             'total_spaces': lot.total_spaces,
             'available_spaces': lot.available_spaces,
 
-            'occupancy_rate': calculate_occupancy_rate(lot),
+            'occupancy_rate': occupancy_rate,
             'peak_time': calculate_peak_time(lot, start_date, end_date),
-            'occupancy_rates': calculate_occupancy_trend(lot, start_date, end_date),
+            'occupancy_rates': trend,
         })
     return results
 

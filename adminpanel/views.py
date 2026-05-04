@@ -38,7 +38,7 @@ class statistics_view(admin_auth_view):
         start_date = request.query_params.get('start', str(date.today()))
         end_date = request.query_params.get('end', str(date.today()))
         lots = get_lots()
-        statistics = calculate_statistics(lots, start_date, end_date)
+        statistics = calculate_statistics(lots, start_date, end_date, live_occupancy=True)
 
         return Response({
             'date_range': f'{start_date} to {end_date}',
@@ -179,7 +179,7 @@ class report_export_view(APIView):
                 stat.get('peak_time', 'N/A')
             ])
 
-        table = Table(table_data, colWidths=[2.5*inch, inch, inch, 1.8*inch])
+        table = Table(table_data, colWidths=[2.5*inch, 1.3*inch, 1.7*inch, 1.8*inch])
         table.setStyle(TableStyle([
             ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
             ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
